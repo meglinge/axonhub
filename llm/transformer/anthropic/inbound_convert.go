@@ -116,24 +116,24 @@ func convertToLLMRequest(anthropicReq *MessageRequest) (*llm.Request, error) {
 					hasContent = true
 				case "image":
 					if block.Source != nil {
-						part := llm.MessageContentPart{
-							Type:         "image_url",
-							CacheControl: convertToLLMCacheControl(block.CacheControl),
-						}
-						if block.Source.Type == "base64" {
+						var imageURL string
+						if block.Source.Type == "base64" && block.Source.Data != "" {
 							// Convert Anthropic image format to OpenAI format
-							imageURL := fmt.Sprintf("data:%s;base64,%s", block.Source.MediaType, block.Source.Data)
-							part.ImageURL = &llm.ImageURL{
-								URL: imageURL,
-							}
-						} else {
-							part.ImageURL = &llm.ImageURL{
-								URL: block.Source.URL,
-							}
+							imageURL = fmt.Sprintf("data:%s;base64,%s", block.Source.MediaType, block.Source.Data)
+						} else if block.Source.URL != "" {
+							imageURL = block.Source.URL
 						}
-
-						contentParts = append(contentParts, part)
-						hasContent = true
+						// Only add the part if we have a valid URL
+						if imageURL != "" {
+							contentParts = append(contentParts, llm.MessageContentPart{
+								Type:         "image_url",
+								CacheControl: convertToLLMCacheControl(block.CacheControl),
+								ImageURL: &llm.ImageURL{
+									URL: imageURL,
+								},
+							})
+							hasContent = true
+						}
 					}
 				case "tool_result":
 					hasToolResult = true
@@ -156,11 +156,30 @@ func convertToLLMRequest(anthropicReq *MessageRequest) (*llm.Request, error) {
 							// Keep as MultipleContent to preserve the original format
 							toolContentParts := make([]llm.MessageContentPart, 0, len(block.Content.MultipleContent))
 							for _, contentBlock := range block.Content.MultipleContent {
-								if contentBlock.Type == "text" {
+								switch contentBlock.Type {
+								case "text":
 									toolContentParts = append(toolContentParts, llm.MessageContentPart{
 										Type: "text",
 										Text: contentBlock.Text,
 									})
+								case "image":
+									// Handle image content blocks in tool_result
+									if contentBlock.Source != nil {
+										var imageURL string
+										if contentBlock.Source.Type == "base64" && contentBlock.Source.Data != "" {
+											// Convert base64 to data URL
+											imageURL = "data:" + contentBlock.Source.MediaType + ";base64," + contentBlock.Source.Data
+										} else if contentBlock.Source.Type == "url" && contentBlock.Source.URL != "" {
+											imageURL = contentBlock.Source.URL
+										}
+										// Only add the part if we have a valid URL
+										if imageURL != "" {
+											toolContentParts = append(toolContentParts, llm.MessageContentPart{
+												Type:     "image_url",
+												ImageURL: &llm.ImageURL{URL: imageURL},
+											})
+										}
+									}
 								}
 							}
 

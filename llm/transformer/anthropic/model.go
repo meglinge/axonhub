@@ -211,7 +211,8 @@ func (m MessageContent) ExtractTrivalBlocks(cacheControl *CacheControl) []Messag
 				contentBlocks = append(contentBlocks, part)
 			}
 
-			if part.Type == "image_url" {
+			// Handle both Anthropic native "image" type and unified "image_url" type
+			if part.Type == "image" || part.Type == "image_url" {
 				contentBlocks = append(contentBlocks, part)
 			}
 		}

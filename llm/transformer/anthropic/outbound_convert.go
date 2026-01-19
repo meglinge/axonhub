@@ -558,6 +558,11 @@ func convertToAnthropicTrivialContent(content llm.MessageContent) *MessageConten
 			}
 		}
 
+		// Return nil if no blocks were added to avoid empty content arrays
+		if len(blocks) == 0 {
+			return nil
+		}
+
 		return &MessageContent{
 			MultipleContent: blocks,
 		}
@@ -728,12 +733,21 @@ func convertToLlmResponse(anthropicResp *Message, platformType PlatformType) *ll
 			}
 		case "image":
 			if block.Source != nil {
-				content.MultipleContent = append(content.MultipleContent, llm.MessageContentPart{
-					Type: "image",
-					ImageURL: &llm.ImageURL{
-						URL: block.Source.Data,
-					},
-				})
+				var imageURL string
+				if block.Source.Type == "base64" && block.Source.Data != "" {
+					// Convert base64 to data URL format
+					imageURL = "data:" + block.Source.MediaType + ";base64," + block.Source.Data
+				} else if block.Source.Type == "url" && block.Source.URL != "" {
+					imageURL = block.Source.URL
+				}
+				if imageURL != "" {
+					content.MultipleContent = append(content.MultipleContent, llm.MessageContentPart{
+						Type: "image_url",
+						ImageURL: &llm.ImageURL{
+							URL: imageURL,
+						},
+					})
+				}
 			}
 		case "tool_use":
 			if block.ID != "" && block.Name != nil {
