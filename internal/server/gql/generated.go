@@ -33,6 +33,7 @@ import (
 	"github.com/looplj/axonhub/internal/objects"
 	"github.com/looplj/axonhub/internal/server/biz"
 	"github.com/looplj/axonhub/llm/httpclient"
+	"github.com/looplj/axonhub/llm/oauth"
 	"github.com/shopspring/decimal"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -91,7 +92,6 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	APIKey struct {
 		CreatedAt func(childComplexity int) int
-		DeletedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
 		Key       func(childComplexity int) int
 		Name      func(childComplexity int) int
@@ -211,7 +211,6 @@ type ComplexityRoot struct {
 		CreatedAt               func(childComplexity int) int
 		Credentials             func(childComplexity int) int
 		DefaultTestModel        func(childComplexity int) int
-		DeletedAt               func(childComplexity int) int
 		ErrorMessage            func(childComplexity int) int
 		Executions              func(childComplexity int, after *entgql.Cursor[int], first *int, before *entgql.Cursor[int], last *int, orderBy *ent.RequestExecutionOrder, where *ent.RequestExecutionWhereInput) int
 		ID                      func(childComplexity int) int
@@ -238,6 +237,7 @@ type ComplexityRoot struct {
 		APIKey func(childComplexity int) int
 		AWS    func(childComplexity int) int
 		GCP    func(childComplexity int) int
+		OAuth  func(childComplexity int) int
 	}
 
 	ChannelEdge struct {
@@ -260,7 +260,6 @@ type ComplexityRoot struct {
 		Channel     func(childComplexity int) int
 		ChannelID   func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
-		DeletedAt   func(childComplexity int) int
 		ID          func(childComplexity int) int
 		ModelID     func(childComplexity int) int
 		Price       func(childComplexity int) int
@@ -309,7 +308,6 @@ type ComplexityRoot struct {
 	ChannelOverrideTemplate struct {
 		ChannelType        func(childComplexity int) int
 		CreatedAt          func(childComplexity int) int
-		DeletedAt          func(childComplexity int) int
 		Description        func(childComplexity int) int
 		ID                 func(childComplexity int) int
 		Name               func(childComplexity int) int
@@ -340,7 +338,6 @@ type ComplexityRoot struct {
 		ChannelID                      func(childComplexity int) int
 		ConsecutiveFailures            func(childComplexity int) int
 		CreatedAt                      func(childComplexity int) int
-		DeletedAt                      func(childComplexity int) int
 		FailureCount                   func(childComplexity int) int
 		ID                             func(childComplexity int) int
 		LastFailureAt                  func(childComplexity int) int
@@ -453,7 +450,6 @@ type ComplexityRoot struct {
 
 	DataStorage struct {
 		CreatedAt   func(childComplexity int) int
-		DeletedAt   func(childComplexity int) int
 		Description func(childComplexity int) int
 		Executions  func(childComplexity int, after *entgql.Cursor[int], first *int, before *entgql.Cursor[int], last *int, orderBy *ent.RequestExecutionOrder, where *ent.RequestExecutionWhereInput) int
 		ID          func(childComplexity int) int
@@ -525,7 +521,6 @@ type ComplexityRoot struct {
 	Model struct {
 		AssociatedChannelCount func(childComplexity int) int
 		CreatedAt              func(childComplexity int) int
-		DeletedAt              func(childComplexity int) int
 		Developer              func(childComplexity int) int
 		Group                  func(childComplexity int) int
 		ID                     func(childComplexity int) int
@@ -706,6 +701,15 @@ type ComplexityRoot struct {
 		UpdateUserStatus                     func(childComplexity int, id objects.GUID, status user.Status) int
 	}
 
+	OAuthCredentials struct {
+		AccessToken  func(childComplexity int) int
+		ClientID     func(childComplexity int) int
+		ExpiresAt    func(childComplexity int) int
+		RefreshToken func(childComplexity int) int
+		Scopes       func(childComplexity int) int
+		TokenType    func(childComplexity int) int
+	}
+
 	OnboardingInfo struct {
 		CompletedAt        func(childComplexity int) int
 		Onboarded          func(childComplexity int) int
@@ -735,7 +739,6 @@ type ComplexityRoot struct {
 	Project struct {
 		APIKeys      func(childComplexity int, after *entgql.Cursor[int], first *int, before *entgql.Cursor[int], last *int, orderBy *ent.APIKeyOrder, where *ent.APIKeyWhereInput) int
 		CreatedAt    func(childComplexity int) int
-		DeletedAt    func(childComplexity int) int
 		Description  func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Name         func(childComplexity int) int
@@ -765,7 +768,6 @@ type ComplexityRoot struct {
 	Prompt struct {
 		Content     func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
-		DeletedAt   func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
@@ -1002,7 +1004,6 @@ type ComplexityRoot struct {
 
 	Role struct {
 		CreatedAt func(childComplexity int) int
-		DeletedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
 		Level     func(childComplexity int) int
 		Name      func(childComplexity int) int
@@ -1123,7 +1124,6 @@ type ComplexityRoot struct {
 
 	System struct {
 		CreatedAt func(childComplexity int) int
-		DeletedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
 		Key       func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
@@ -1336,7 +1336,6 @@ type ComplexityRoot struct {
 		Avatar                   func(childComplexity int) int
 		ChannelOverrideTemplates func(childComplexity int, after *entgql.Cursor[int], first *int, before *entgql.Cursor[int], last *int, orderBy *ent.ChannelOverrideTemplateOrder, where *ent.ChannelOverrideTemplateWhereInput) int
 		CreatedAt                func(childComplexity int) int
-		DeletedAt                func(childComplexity int) int
 		Email                    func(childComplexity int) int
 		FirstName                func(childComplexity int) int
 		ID                       func(childComplexity int) int
@@ -1704,12 +1703,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.APIKey.CreatedAt(childComplexity), true
-	case "APIKey.deletedAt":
-		if e.complexity.APIKey.DeletedAt == nil {
-			break
-		}
-
-		return e.complexity.APIKey.DeletedAt(childComplexity), true
 	case "APIKey.id":
 		if e.complexity.APIKey.ID == nil {
 			break
@@ -2140,12 +2133,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Channel.DefaultTestModel(childComplexity), true
-	case "Channel.deletedAt":
-		if e.complexity.Channel.DeletedAt == nil {
-			break
-		}
-
-		return e.complexity.Channel.DeletedAt(childComplexity), true
 	case "Channel.errorMessage":
 		if e.complexity.Channel.ErrorMessage == nil {
 			break
@@ -2283,6 +2270,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ChannelCredentials.GCP(childComplexity), true
+	case "ChannelCredentials.oauth":
+		if e.complexity.ChannelCredentials.OAuth == nil {
+			break
+		}
+
+		return e.complexity.ChannelCredentials.OAuth(childComplexity), true
 
 	case "ChannelEdge.cursor":
 		if e.complexity.ChannelEdge.Cursor == nil {
@@ -2347,12 +2340,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ChannelModelPrice.CreatedAt(childComplexity), true
-	case "ChannelModelPrice.deletedAt":
-		if e.complexity.ChannelModelPrice.DeletedAt == nil {
-			break
-		}
-
-		return e.complexity.ChannelModelPrice.DeletedAt(childComplexity), true
 	case "ChannelModelPrice.id":
 		if e.complexity.ChannelModelPrice.ID == nil {
 			break
@@ -2539,12 +2526,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ChannelOverrideTemplate.CreatedAt(childComplexity), true
-	case "ChannelOverrideTemplate.deletedAt":
-		if e.complexity.ChannelOverrideTemplate.DeletedAt == nil {
-			break
-		}
-
-		return e.complexity.ChannelOverrideTemplate.DeletedAt(childComplexity), true
 	case "ChannelOverrideTemplate.description":
 		if e.complexity.ChannelOverrideTemplate.Description == nil {
 			break
@@ -2674,12 +2655,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ChannelPerformance.CreatedAt(childComplexity), true
-	case "ChannelPerformance.deletedAt":
-		if e.complexity.ChannelPerformance.DeletedAt == nil {
-			break
-		}
-
-		return e.complexity.ChannelPerformance.DeletedAt(childComplexity), true
 	case "ChannelPerformance.failureCount":
 		if e.complexity.ChannelPerformance.FailureCount == nil {
 			break
@@ -3097,12 +3072,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DataStorage.CreatedAt(childComplexity), true
-	case "DataStorage.deletedAt":
-		if e.complexity.DataStorage.DeletedAt == nil {
-			break
-		}
-
-		return e.complexity.DataStorage.DeletedAt(childComplexity), true
 	case "DataStorage.description":
 		if e.complexity.DataStorage.Description == nil {
 			break
@@ -3352,12 +3321,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Model.CreatedAt(childComplexity), true
-	case "Model.deletedAt":
-		if e.complexity.Model.DeletedAt == nil {
-			break
-		}
-
-		return e.complexity.Model.DeletedAt(childComplexity), true
 	case "Model.developer":
 		if e.complexity.Model.Developer == nil {
 			break
@@ -4473,6 +4436,43 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.UpdateUserStatus(childComplexity, args["id"].(objects.GUID), args["status"].(user.Status)), true
 
+	case "OAuthCredentials.accessToken":
+		if e.complexity.OAuthCredentials.AccessToken == nil {
+			break
+		}
+
+		return e.complexity.OAuthCredentials.AccessToken(childComplexity), true
+	case "OAuthCredentials.clientID":
+		if e.complexity.OAuthCredentials.ClientID == nil {
+			break
+		}
+
+		return e.complexity.OAuthCredentials.ClientID(childComplexity), true
+	case "OAuthCredentials.expiresAt":
+		if e.complexity.OAuthCredentials.ExpiresAt == nil {
+			break
+		}
+
+		return e.complexity.OAuthCredentials.ExpiresAt(childComplexity), true
+	case "OAuthCredentials.refreshToken":
+		if e.complexity.OAuthCredentials.RefreshToken == nil {
+			break
+		}
+
+		return e.complexity.OAuthCredentials.RefreshToken(childComplexity), true
+	case "OAuthCredentials.scopes":
+		if e.complexity.OAuthCredentials.Scopes == nil {
+			break
+		}
+
+		return e.complexity.OAuthCredentials.Scopes(childComplexity), true
+	case "OAuthCredentials.tokenType":
+		if e.complexity.OAuthCredentials.TokenType == nil {
+			break
+		}
+
+		return e.complexity.OAuthCredentials.TokenType(childComplexity), true
+
 	case "OnboardingInfo.completedAt":
 		if e.complexity.OnboardingInfo.CompletedAt == nil {
 			break
@@ -4578,12 +4578,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Project.CreatedAt(childComplexity), true
-	case "Project.deletedAt":
-		if e.complexity.Project.DeletedAt == nil {
-			break
-		}
-
-		return e.complexity.Project.DeletedAt(childComplexity), true
 	case "Project.description":
 		if e.complexity.Project.Description == nil {
 			break
@@ -4742,12 +4736,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Prompt.CreatedAt(childComplexity), true
-	case "Prompt.deletedAt":
-		if e.complexity.Prompt.DeletedAt == nil {
-			break
-		}
-
-		return e.complexity.Prompt.DeletedAt(childComplexity), true
 	case "Prompt.description":
 		if e.complexity.Prompt.Description == nil {
 			break
@@ -5891,12 +5879,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Role.CreatedAt(childComplexity), true
-	case "Role.deletedAt":
-		if e.complexity.Role.DeletedAt == nil {
-			break
-		}
-
-		return e.complexity.Role.DeletedAt(childComplexity), true
 	case "Role.id":
 		if e.complexity.Role.ID == nil {
 			break
@@ -6299,12 +6281,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.System.CreatedAt(childComplexity), true
-	case "System.deletedAt":
-		if e.complexity.System.DeletedAt == nil {
-			break
-		}
-
-		return e.complexity.System.DeletedAt(childComplexity), true
 	case "System.id":
 		if e.complexity.System.ID == nil {
 			break
@@ -7138,12 +7114,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.User.CreatedAt(childComplexity), true
-	case "User.deletedAt":
-		if e.complexity.User.DeletedAt == nil {
-			break
-		}
-
-		return e.complexity.User.DeletedAt(childComplexity), true
 	case "User.email":
 		if e.complexity.User.Email == nil {
 			break
@@ -7559,6 +7529,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputModelPriceItemInput,
 		ec.unmarshalInputModelSettingsInput,
 		ec.unmarshalInputModelWhereInput,
+		ec.unmarshalInputOAuthCredentialsInput,
 		ec.unmarshalInputPriceTierInput,
 		ec.unmarshalInputPricingInput,
 		ec.unmarshalInputProjectOrder,
@@ -10212,35 +10183,6 @@ func (ec *executionContext) fieldContext_APIKey_updatedAt(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _APIKey_deletedAt(ctx context.Context, field graphql.CollectedField, obj *ent.APIKey) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_APIKey_deletedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedAt, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_APIKey_deletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "APIKey",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _APIKey_userID(ctx context.Context, field graphql.CollectedField, obj *ent.APIKey) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10509,8 +10451,6 @@ func (ec *executionContext) fieldContext_APIKey_user(_ context.Context, field gr
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_User_deletedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "status":
@@ -10576,8 +10516,6 @@ func (ec *executionContext) fieldContext_APIKey_project(_ context.Context, field
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Project_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Project_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Project_name(ctx, field)
 			case "description":
@@ -10791,8 +10729,6 @@ func (ec *executionContext) fieldContext_APIKeyEdge_node(_ context.Context, fiel
 				return ec.fieldContext_APIKey_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_APIKey_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_APIKey_deletedAt(ctx, field)
 			case "userID":
 				return ec.fieldContext_APIKey_userID(ctx, field)
 			case "projectID":
@@ -11596,8 +11532,6 @@ func (ec *executionContext) fieldContext_ApplyChannelOverrideTemplatePayload_cha
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -12058,8 +11992,6 @@ func (ec *executionContext) fieldContext_BulkImportChannelsResult_channels(_ con
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -12195,8 +12127,6 @@ func (ec *executionContext) fieldContext_BulkUpdateChannelOrderingResult_channel
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -12326,35 +12256,6 @@ func (ec *executionContext) fieldContext_Channel_updatedAt(_ context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Channel_deletedAt(ctx context.Context, field graphql.CollectedField, obj *ent.Channel) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Channel_deletedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedAt, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Channel_deletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Channel",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -12905,8 +12806,6 @@ func (ec *executionContext) fieldContext_Channel_channelPerformance(_ context.Co
 				return ec.fieldContext_ChannelPerformance_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ChannelPerformance_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_ChannelPerformance_deletedAt(ctx, field)
 			case "channelID":
 				return ec.fieldContext_ChannelPerformance_channelID(ctx, field)
 			case "successRate":
@@ -13027,8 +12926,6 @@ func (ec *executionContext) fieldContext_Channel_channelModelPrices(_ context.Co
 				return ec.fieldContext_ChannelModelPrice_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ChannelModelPrice_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_ChannelModelPrice_deletedAt(ctx, field)
 			case "channelID":
 				return ec.fieldContext_ChannelModelPrice_channelID(ctx, field)
 			case "modelID":
@@ -13115,6 +13012,8 @@ func (ec *executionContext) fieldContext_Channel_credentials(_ context.Context, 
 				return ec.fieldContext_ChannelCredentials_aws(ctx, field)
 			case "gcp":
 				return ec.fieldContext_ChannelCredentials_gcp(ctx, field)
+			case "oauth":
+				return ec.fieldContext_ChannelCredentials_oauth(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ChannelCredentials", field.Name)
 		},
@@ -13328,6 +13227,49 @@ func (ec *executionContext) fieldContext_ChannelCredentials_gcp(_ context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _ChannelCredentials_oauth(ctx context.Context, field graphql.CollectedField, obj *objects.ChannelCredentials) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ChannelCredentials_oauth,
+		func(ctx context.Context) (any, error) {
+			return obj.OAuth, nil
+		},
+		nil,
+		ec.marshalOOAuthCredentials2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋllmᚋoauthᚐOAuthCredentials,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ChannelCredentials_oauth(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ChannelCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accessToken":
+				return ec.fieldContext_OAuthCredentials_accessToken(ctx, field)
+			case "refreshToken":
+				return ec.fieldContext_OAuthCredentials_refreshToken(ctx, field)
+			case "clientID":
+				return ec.fieldContext_OAuthCredentials_clientID(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_OAuthCredentials_expiresAt(ctx, field)
+			case "tokenType":
+				return ec.fieldContext_OAuthCredentials_tokenType(ctx, field)
+			case "scopes":
+				return ec.fieldContext_OAuthCredentials_scopes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OAuthCredentials", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ChannelEdge_node(ctx context.Context, field graphql.CollectedField, obj *ent.ChannelEdge) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -13358,8 +13300,6 @@ func (ec *executionContext) fieldContext_ChannelEdge_node(_ context.Context, fie
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -13668,35 +13608,6 @@ func (ec *executionContext) fieldContext_ChannelModelPrice_updatedAt(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _ChannelModelPrice_deletedAt(ctx context.Context, field graphql.CollectedField, obj *ent.ChannelModelPrice) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ChannelModelPrice_deletedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedAt, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ChannelModelPrice_deletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ChannelModelPrice",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ChannelModelPrice_channelID(ctx context.Context, field graphql.CollectedField, obj *ent.ChannelModelPrice) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -13847,8 +13758,6 @@ func (ec *executionContext) fieldContext_ChannelModelPrice_channel(_ context.Con
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -14084,8 +13993,6 @@ func (ec *executionContext) fieldContext_ChannelModelPriceEdge_node(_ context.Co
 				return ec.fieldContext_ChannelModelPrice_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ChannelModelPrice_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_ChannelModelPrice_deletedAt(ctx, field)
 			case "channelID":
 				return ec.fieldContext_ChannelModelPrice_channelID(ctx, field)
 			case "modelID":
@@ -14487,8 +14394,6 @@ func (ec *executionContext) fieldContext_ChannelModelPriceVersion_channelModelPr
 				return ec.fieldContext_ChannelModelPrice_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ChannelModelPrice_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_ChannelModelPrice_deletedAt(ctx, field)
 			case "channelID":
 				return ec.fieldContext_ChannelModelPrice_channelID(ctx, field)
 			case "modelID":
@@ -14782,35 +14687,6 @@ func (ec *executionContext) fieldContext_ChannelOverrideTemplate_updatedAt(_ con
 	return fc, nil
 }
 
-func (ec *executionContext) _ChannelOverrideTemplate_deletedAt(ctx context.Context, field graphql.CollectedField, obj *ent.ChannelOverrideTemplate) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ChannelOverrideTemplate_deletedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedAt, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ChannelOverrideTemplate_deletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ChannelOverrideTemplate",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ChannelOverrideTemplate_userID(ctx context.Context, field graphql.CollectedField, obj *ent.ChannelOverrideTemplate) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -15021,8 +14897,6 @@ func (ec *executionContext) fieldContext_ChannelOverrideTemplate_user(_ context.
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_User_deletedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "status":
@@ -15191,8 +15065,6 @@ func (ec *executionContext) fieldContext_ChannelOverrideTemplateEdge_node(_ cont
 				return ec.fieldContext_ChannelOverrideTemplate_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ChannelOverrideTemplate_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_ChannelOverrideTemplate_deletedAt(ctx, field)
 			case "userID":
 				return ec.fieldContext_ChannelOverrideTemplate_userID(ctx, field)
 			case "name":
@@ -15325,35 +15197,6 @@ func (ec *executionContext) fieldContext_ChannelPerformance_updatedAt(_ context.
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ChannelPerformance_deletedAt(ctx context.Context, field graphql.CollectedField, obj *ent.ChannelPerformance) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ChannelPerformance_deletedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedAt, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ChannelPerformance_deletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ChannelPerformance",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -15940,8 +15783,6 @@ func (ec *executionContext) fieldContext_ChannelPerformance_channel(_ context.Co
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -16164,8 +16005,6 @@ func (ec *executionContext) fieldContext_ChannelProbe_channel(_ context.Context,
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -17661,35 +17500,6 @@ func (ec *executionContext) fieldContext_DataStorage_updatedAt(_ context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _DataStorage_deletedAt(ctx context.Context, field graphql.CollectedField, obj *ent.DataStorage) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_DataStorage_deletedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedAt, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_DataStorage_deletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DataStorage",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _DataStorage_name(ctx context.Context, field graphql.CollectedField, obj *ent.DataStorage) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -18105,8 +17915,6 @@ func (ec *executionContext) fieldContext_DataStorageEdge_node(_ context.Context,
 				return ec.fieldContext_DataStorage_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_DataStorage_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_DataStorage_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_DataStorage_name(ctx, field)
 			case "description":
@@ -18756,8 +18564,6 @@ func (ec *executionContext) fieldContext_InitializeSystemPayload_user(_ context.
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_User_deletedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "status":
@@ -18904,35 +18710,6 @@ func (ec *executionContext) fieldContext_Model_updatedAt(_ context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Model_deletedAt(ctx context.Context, field graphql.CollectedField, obj *ent.Model) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Model_deletedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedAt, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Model_deletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Model",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -20189,8 +19966,6 @@ func (ec *executionContext) fieldContext_ModelChannelConnection_channel(_ contex
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -20437,8 +20212,6 @@ func (ec *executionContext) fieldContext_ModelEdge_node(_ context.Context, field
 				return ec.fieldContext_Model_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Model_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Model_deletedAt(ctx, field)
 			case "developer":
 				return ec.fieldContext_Model_developer(ctx, field)
 			case "modelID":
@@ -20926,8 +20699,6 @@ func (ec *executionContext) fieldContext_Mutation_createChannel(ctx context.Cont
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -21017,8 +20788,6 @@ func (ec *executionContext) fieldContext_Mutation_bulkCreateChannels(ctx context
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -21108,8 +20877,6 @@ func (ec *executionContext) fieldContext_Mutation_updateChannel(ctx context.Cont
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -21199,8 +20966,6 @@ func (ec *executionContext) fieldContext_Mutation_updateChannelStatus(ctx contex
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -21648,8 +21413,6 @@ func (ec *executionContext) fieldContext_Mutation_createAPIKey(ctx context.Conte
 				return ec.fieldContext_APIKey_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_APIKey_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_APIKey_deletedAt(ctx, field)
 			case "userID":
 				return ec.fieldContext_APIKey_userID(ctx, field)
 			case "projectID":
@@ -21721,8 +21484,6 @@ func (ec *executionContext) fieldContext_Mutation_updateAPIKey(ctx context.Conte
 				return ec.fieldContext_APIKey_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_APIKey_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_APIKey_deletedAt(ctx, field)
 			case "userID":
 				return ec.fieldContext_APIKey_userID(ctx, field)
 			case "projectID":
@@ -21794,8 +21555,6 @@ func (ec *executionContext) fieldContext_Mutation_updateAPIKeyStatus(ctx context
 				return ec.fieldContext_APIKey_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_APIKey_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_APIKey_deletedAt(ctx, field)
 			case "userID":
 				return ec.fieldContext_APIKey_userID(ctx, field)
 			case "projectID":
@@ -21867,8 +21626,6 @@ func (ec *executionContext) fieldContext_Mutation_updateAPIKeyProfiles(ctx conte
 				return ec.fieldContext_APIKey_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_APIKey_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_APIKey_deletedAt(ctx, field)
 			case "userID":
 				return ec.fieldContext_APIKey_userID(ctx, field)
 			case "projectID":
@@ -22063,8 +21820,6 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_User_deletedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "status":
@@ -22142,8 +21897,6 @@ func (ec *executionContext) fieldContext_Mutation_updateUser(ctx context.Context
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_User_deletedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "status":
@@ -22221,8 +21974,6 @@ func (ec *executionContext) fieldContext_Mutation_updateUserStatus(ctx context.C
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_User_deletedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "status":
@@ -22300,8 +22051,6 @@ func (ec *executionContext) fieldContext_Mutation_createRole(ctx context.Context
 				return ec.fieldContext_Role_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Role_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Role_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Role_name(ctx, field)
 			case "level":
@@ -22365,8 +22114,6 @@ func (ec *executionContext) fieldContext_Mutation_updateRole(ctx context.Context
 				return ec.fieldContext_Role_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Role_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Role_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Role_name(ctx, field)
 			case "level":
@@ -22512,8 +22259,6 @@ func (ec *executionContext) fieldContext_Mutation_createProject(ctx context.Cont
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Project_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Project_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Project_name(ctx, field)
 			case "description":
@@ -22587,8 +22332,6 @@ func (ec *executionContext) fieldContext_Mutation_updateProject(ctx context.Cont
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Project_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Project_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Project_name(ctx, field)
 			case "description":
@@ -22662,8 +22405,6 @@ func (ec *executionContext) fieldContext_Mutation_updateProjectStatus(ctx contex
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Project_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Project_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Project_name(ctx, field)
 			case "description":
@@ -22900,8 +22641,6 @@ func (ec *executionContext) fieldContext_Mutation_createDataStorage(ctx context.
 				return ec.fieldContext_DataStorage_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_DataStorage_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_DataStorage_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_DataStorage_name(ctx, field)
 			case "description":
@@ -22967,8 +22706,6 @@ func (ec *executionContext) fieldContext_Mutation_updateDataStorage(ctx context.
 				return ec.fieldContext_DataStorage_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_DataStorage_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_DataStorage_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_DataStorage_name(ctx, field)
 			case "description":
@@ -23034,8 +22771,6 @@ func (ec *executionContext) fieldContext_Mutation_createChannelOverrideTemplate(
 				return ec.fieldContext_ChannelOverrideTemplate_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ChannelOverrideTemplate_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_ChannelOverrideTemplate_deletedAt(ctx, field)
 			case "userID":
 				return ec.fieldContext_ChannelOverrideTemplate_userID(ctx, field)
 			case "name":
@@ -23099,8 +22834,6 @@ func (ec *executionContext) fieldContext_Mutation_updateChannelOverrideTemplate(
 				return ec.fieldContext_ChannelOverrideTemplate_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ChannelOverrideTemplate_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_ChannelOverrideTemplate_deletedAt(ctx, field)
 			case "userID":
 				return ec.fieldContext_ChannelOverrideTemplate_userID(ctx, field)
 			case "name":
@@ -23254,8 +22987,6 @@ func (ec *executionContext) fieldContext_Mutation_updateMe(ctx context.Context, 
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_User_deletedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "status":
@@ -23702,8 +23433,6 @@ func (ec *executionContext) fieldContext_Mutation_createModel(ctx context.Contex
 				return ec.fieldContext_Model_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Model_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Model_deletedAt(ctx, field)
 			case "developer":
 				return ec.fieldContext_Model_developer(ctx, field)
 			case "modelID":
@@ -23775,8 +23504,6 @@ func (ec *executionContext) fieldContext_Mutation_bulkCreateModels(ctx context.C
 				return ec.fieldContext_Model_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Model_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Model_deletedAt(ctx, field)
 			case "developer":
 				return ec.fieldContext_Model_developer(ctx, field)
 			case "modelID":
@@ -23848,8 +23575,6 @@ func (ec *executionContext) fieldContext_Mutation_updateModel(ctx context.Contex
 				return ec.fieldContext_Model_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Model_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Model_deletedAt(ctx, field)
 			case "developer":
 				return ec.fieldContext_Model_developer(ctx, field)
 			case "modelID":
@@ -24263,8 +23988,6 @@ func (ec *executionContext) fieldContext_Mutation_createPrompt(ctx context.Conte
 				return ec.fieldContext_Prompt_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Prompt_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Prompt_deletedAt(ctx, field)
 			case "projectID":
 				return ec.fieldContext_Prompt_projectID(ctx, field)
 			case "name":
@@ -24330,8 +24053,6 @@ func (ec *executionContext) fieldContext_Mutation_updatePrompt(ctx context.Conte
 				return ec.fieldContext_Prompt_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Prompt_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Prompt_deletedAt(ctx, field)
 			case "projectID":
 				return ec.fieldContext_Prompt_projectID(ctx, field)
 			case "name":
@@ -24602,8 +24323,6 @@ func (ec *executionContext) fieldContext_Mutation_saveChannelModelPrices(ctx con
 				return ec.fieldContext_ChannelModelPrice_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ChannelModelPrice_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_ChannelModelPrice_deletedAt(ctx, field)
 			case "channelID":
 				return ec.fieldContext_ChannelModelPrice_channelID(ctx, field)
 			case "modelID":
@@ -24630,6 +24349,180 @@ func (ec *executionContext) fieldContext_Mutation_saveChannelModelPrices(ctx con
 	if fc.Args, err = ec.field_Mutation_saveChannelModelPrices_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OAuthCredentials_accessToken(ctx context.Context, field graphql.CollectedField, obj *oauth.OAuthCredentials) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OAuthCredentials_accessToken,
+		func(ctx context.Context) (any, error) {
+			return obj.AccessToken, nil
+		},
+		nil,
+		ec.marshalOString2string,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OAuthCredentials_accessToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OAuthCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OAuthCredentials_refreshToken(ctx context.Context, field graphql.CollectedField, obj *oauth.OAuthCredentials) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OAuthCredentials_refreshToken,
+		func(ctx context.Context) (any, error) {
+			return obj.RefreshToken, nil
+		},
+		nil,
+		ec.marshalOString2string,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OAuthCredentials_refreshToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OAuthCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OAuthCredentials_clientID(ctx context.Context, field graphql.CollectedField, obj *oauth.OAuthCredentials) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OAuthCredentials_clientID,
+		func(ctx context.Context) (any, error) {
+			return obj.ClientID, nil
+		},
+		nil,
+		ec.marshalOString2string,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OAuthCredentials_clientID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OAuthCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OAuthCredentials_expiresAt(ctx context.Context, field graphql.CollectedField, obj *oauth.OAuthCredentials) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OAuthCredentials_expiresAt,
+		func(ctx context.Context) (any, error) {
+			return obj.ExpiresAt, nil
+		},
+		nil,
+		ec.marshalOTime2timeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OAuthCredentials_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OAuthCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OAuthCredentials_tokenType(ctx context.Context, field graphql.CollectedField, obj *oauth.OAuthCredentials) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OAuthCredentials_tokenType,
+		func(ctx context.Context) (any, error) {
+			return obj.TokenType, nil
+		},
+		nil,
+		ec.marshalOString2string,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OAuthCredentials_tokenType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OAuthCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OAuthCredentials_scopes(ctx context.Context, field graphql.CollectedField, obj *oauth.OAuthCredentials) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OAuthCredentials_scopes,
+		func(ctx context.Context) (any, error) {
+			return obj.Scopes, nil
+		},
+		nil,
+		ec.marshalOString2ᚕstringᚄ,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OAuthCredentials_scopes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OAuthCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -25132,35 +25025,6 @@ func (ec *executionContext) fieldContext_Project_updatedAt(_ context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Project_deletedAt(ctx context.Context, field graphql.CollectedField, obj *ent.Project) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Project_deletedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedAt, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Project_deletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Project",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -25827,8 +25691,6 @@ func (ec *executionContext) fieldContext_ProjectEdge_node(_ context.Context, fie
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Project_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Project_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Project_name(ctx, field)
 			case "description":
@@ -25971,35 +25833,6 @@ func (ec *executionContext) fieldContext_Prompt_updatedAt(_ context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Prompt_deletedAt(ctx context.Context, field graphql.CollectedField, obj *ent.Prompt) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Prompt_deletedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedAt, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Prompt_deletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Prompt",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -26549,8 +26382,6 @@ func (ec *executionContext) fieldContext_PromptEdge_node(_ context.Context, fiel
 				return ec.fieldContext_Prompt_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Prompt_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Prompt_deletedAt(ctx, field)
 			case "projectID":
 				return ec.fieldContext_Prompt_projectID(ctx, field)
 			case "name":
@@ -28327,8 +28158,6 @@ func (ec *executionContext) fieldContext_Query_myProjects(_ context.Context, fie
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Project_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Project_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Project_name(ctx, field)
 			case "description":
@@ -29799,8 +29628,6 @@ func (ec *executionContext) fieldContext_Request_apiKey(_ context.Context, field
 				return ec.fieldContext_APIKey_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_APIKey_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_APIKey_deletedAt(ctx, field)
 			case "userID":
 				return ec.fieldContext_APIKey_userID(ctx, field)
 			case "projectID":
@@ -29860,8 +29687,6 @@ func (ec *executionContext) fieldContext_Request_project(_ context.Context, fiel
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Project_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Project_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Project_name(ctx, field)
 			case "description":
@@ -29982,8 +29807,6 @@ func (ec *executionContext) fieldContext_Request_dataStorage(_ context.Context, 
 				return ec.fieldContext_DataStorage_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_DataStorage_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_DataStorage_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_DataStorage_name(ctx, field)
 			case "description":
@@ -30086,8 +29909,6 @@ func (ec *executionContext) fieldContext_Request_channel(_ context.Context, fiel
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -31071,8 +30892,6 @@ func (ec *executionContext) fieldContext_RequestExecution_channel(_ context.Cont
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -31150,8 +30969,6 @@ func (ec *executionContext) fieldContext_RequestExecution_dataStorage(_ context.
 				return ec.fieldContext_DataStorage_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_DataStorage_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_DataStorage_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_DataStorage_name(ctx, field)
 			case "description":
@@ -32200,35 +32017,6 @@ func (ec *executionContext) fieldContext_Role_updatedAt(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Role_deletedAt(ctx context.Context, field graphql.CollectedField, obj *ent.Role) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Role_deletedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedAt, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Role_deletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Role",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Role_name(ctx context.Context, field graphql.CollectedField, obj *ent.Role) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -32424,8 +32212,6 @@ func (ec *executionContext) fieldContext_Role_project(_ context.Context, field g
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Project_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Project_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Project_name(ctx, field)
 			case "description":
@@ -32635,8 +32421,6 @@ func (ec *executionContext) fieldContext_RoleEdge_node(_ context.Context, field 
 				return ec.fieldContext_Role_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Role_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Role_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Role_name(ctx, field)
 			case "level":
@@ -33268,8 +33052,6 @@ func (ec *executionContext) fieldContext_SignInPayload_user(_ context.Context, f
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_User_deletedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "status":
@@ -34328,35 +34110,6 @@ func (ec *executionContext) fieldContext_System_updatedAt(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _System_deletedAt(ctx context.Context, field graphql.CollectedField, obj *ent.System) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_System_deletedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedAt, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_System_deletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "System",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _System_key(ctx context.Context, field graphql.CollectedField, obj *ent.System) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -34583,8 +34336,6 @@ func (ec *executionContext) fieldContext_SystemEdge_node(_ context.Context, fiel
 				return ec.fieldContext_System_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_System_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_System_deletedAt(ctx, field)
 			case "key":
 				return ec.fieldContext_System_key(ctx, field)
 			case "value":
@@ -35264,8 +35015,6 @@ func (ec *executionContext) fieldContext_Thread_project(_ context.Context, field
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Project_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Project_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Project_name(ctx, field)
 			case "description":
@@ -36505,8 +36254,6 @@ func (ec *executionContext) fieldContext_Trace_project(_ context.Context, field 
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Project_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Project_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Project_name(ctx, field)
 			case "description":
@@ -37125,8 +36872,6 @@ func (ec *executionContext) fieldContext_UnassociatedChannel_channel(_ context.C
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -38055,8 +37800,6 @@ func (ec *executionContext) fieldContext_UsageLog_project(_ context.Context, fie
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Project_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Project_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Project_name(ctx, field)
 			case "description":
@@ -38118,8 +37861,6 @@ func (ec *executionContext) fieldContext_UsageLog_channel(_ context.Context, fie
 				return ec.fieldContext_Channel_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Channel_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Channel_deletedAt(ctx, field)
 			case "type":
 				return ec.fieldContext_Channel_type(ctx, field)
 			case "baseURL":
@@ -38642,35 +38383,6 @@ func (ec *executionContext) fieldContext_User_updatedAt(_ context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _User_deletedAt(ctx context.Context, field graphql.CollectedField, obj *ent.User) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_User_deletedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedAt, nil
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_User_deletedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -39331,8 +39043,6 @@ func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field 
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_User_deletedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "status":
@@ -39934,8 +39644,6 @@ func (ec *executionContext) fieldContext_UserProject_user(_ context.Context, fie
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_User_deletedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "status":
@@ -40001,8 +39709,6 @@ func (ec *executionContext) fieldContext_UserProject_project(_ context.Context, 
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Project_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Project_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Project_name(ctx, field)
 			case "description":
@@ -40329,8 +40035,6 @@ func (ec *executionContext) fieldContext_UserRole_user(_ context.Context, field 
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_User_deletedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
 			case "status":
@@ -40396,8 +40100,6 @@ func (ec *executionContext) fieldContext_UserRole_role(_ context.Context, field 
 				return ec.fieldContext_Role_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Role_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Role_deletedAt(ctx, field)
 			case "name":
 				return ec.fieldContext_Role_name(ctx, field)
 			case "level":
@@ -42238,7 +41940,7 @@ func (ec *executionContext) unmarshalInputAPIKeyWhereInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "userID", "userIDNEQ", "userIDIn", "userIDNotIn", "projectID", "projectIDNEQ", "projectIDIn", "projectIDNotIn", "key", "keyNEQ", "keyIn", "keyNotIn", "keyGT", "keyGTE", "keyLT", "keyLTE", "keyContains", "keyHasPrefix", "keyHasSuffix", "keyEqualFold", "keyContainsFold", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "type", "typeNEQ", "typeIn", "typeNotIn", "status", "statusNEQ", "statusIn", "statusNotIn", "hasUser", "hasUserWith", "hasProject", "hasProjectWith", "hasRequests", "hasRequestsWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "userID", "userIDNEQ", "userIDIn", "userIDNotIn", "projectID", "projectIDNEQ", "projectIDIn", "projectIDNotIn", "key", "keyNEQ", "keyIn", "keyNotIn", "keyGT", "keyGTE", "keyLT", "keyLTE", "keyContains", "keyHasPrefix", "keyHasSuffix", "keyEqualFold", "keyContainsFold", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "type", "typeNEQ", "typeIn", "typeNotIn", "status", "statusNEQ", "statusIn", "statusNotIn", "hasUser", "hasUserWith", "hasProject", "hasProjectWith", "hasRequests", "hasRequestsWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -42466,62 +42168,6 @@ func (ec *executionContext) unmarshalInputAPIKeyWhereInput(ctx context.Context, 
 				return it, err
 			}
 			it.UpdatedAtLTE = data
-		case "deletedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAt"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAt = data
-		case "deletedAtNEQ":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNEQ"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNEQ = data
-		case "deletedAtIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtIn = data
-		case "deletedAtNotIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNotIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNotIn = data
-		case "deletedAtGT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGT = data
-		case "deletedAtGTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGTE = data
-		case "deletedAtLT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLT = data
-		case "deletedAtLTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLTE = data
 		case "userID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐGUID(ctx, v)
@@ -43352,7 +42998,7 @@ func (ec *executionContext) unmarshalInputChannelCredentialsInput(ctx context.Co
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiKey", "aws", "gcp"}
+	fieldsInOrder := [...]string{"apiKey", "aws", "gcp", "oauth"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -43380,6 +43026,13 @@ func (ec *executionContext) unmarshalInputChannelCredentialsInput(ctx context.Co
 				return it, err
 			}
 			it.GCP = data
+		case "oauth":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("oauth"))
+			data, err := ec.unmarshalOOAuthCredentialsInput2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋllmᚋoauthᚐOAuthCredentials(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OAuth = data
 		}
 	}
 
@@ -44194,7 +43847,7 @@ func (ec *executionContext) unmarshalInputChannelModelPriceWhereInput(ctx contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "channelID", "channelIDNEQ", "channelIDIn", "channelIDNotIn", "modelID", "modelIDNEQ", "modelIDIn", "modelIDNotIn", "modelIDGT", "modelIDGTE", "modelIDLT", "modelIDLTE", "modelIDContains", "modelIDHasPrefix", "modelIDHasSuffix", "modelIDEqualFold", "modelIDContainsFold", "referenceID", "referenceIDNEQ", "referenceIDIn", "referenceIDNotIn", "referenceIDGT", "referenceIDGTE", "referenceIDLT", "referenceIDLTE", "referenceIDContains", "referenceIDHasPrefix", "referenceIDHasSuffix", "referenceIDEqualFold", "referenceIDContainsFold", "hasChannel", "hasChannelWith", "hasVersions", "hasVersionsWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "channelID", "channelIDNEQ", "channelIDIn", "channelIDNotIn", "modelID", "modelIDNEQ", "modelIDIn", "modelIDNotIn", "modelIDGT", "modelIDGTE", "modelIDLT", "modelIDLTE", "modelIDContains", "modelIDHasPrefix", "modelIDHasSuffix", "modelIDEqualFold", "modelIDContainsFold", "referenceID", "referenceIDNEQ", "referenceIDIn", "referenceIDNotIn", "referenceIDGT", "referenceIDGTE", "referenceIDLT", "referenceIDLTE", "referenceIDContains", "referenceIDHasPrefix", "referenceIDHasSuffix", "referenceIDEqualFold", "referenceIDContainsFold", "hasChannel", "hasChannelWith", "hasVersions", "hasVersionsWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -44422,62 +44075,6 @@ func (ec *executionContext) unmarshalInputChannelModelPriceWhereInput(ctx contex
 				return it, err
 			}
 			it.UpdatedAtLTE = data
-		case "deletedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAt"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAt = data
-		case "deletedAtNEQ":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNEQ"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNEQ = data
-		case "deletedAtIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtIn = data
-		case "deletedAtNotIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNotIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNotIn = data
-		case "deletedAtGT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGT = data
-		case "deletedAtGTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGTE = data
-		case "deletedAtLT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLT = data
-		case "deletedAtLTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLTE = data
 		case "channelID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("channelID"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐGUID(ctx, v)
@@ -44859,7 +44456,7 @@ func (ec *executionContext) unmarshalInputChannelOverrideTemplateWhereInput(ctx 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "userID", "userIDNEQ", "userIDIn", "userIDNotIn", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionIsNil", "descriptionNotNil", "descriptionEqualFold", "descriptionContainsFold", "channelType", "channelTypeNEQ", "channelTypeIn", "channelTypeNotIn", "channelTypeGT", "channelTypeGTE", "channelTypeLT", "channelTypeLTE", "channelTypeContains", "channelTypeHasPrefix", "channelTypeHasSuffix", "channelTypeEqualFold", "channelTypeContainsFold", "overrideParameters", "overrideParametersNEQ", "overrideParametersIn", "overrideParametersNotIn", "overrideParametersGT", "overrideParametersGTE", "overrideParametersLT", "overrideParametersLTE", "overrideParametersContains", "overrideParametersHasPrefix", "overrideParametersHasSuffix", "overrideParametersEqualFold", "overrideParametersContainsFold", "hasUser", "hasUserWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "userID", "userIDNEQ", "userIDIn", "userIDNotIn", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionIsNil", "descriptionNotNil", "descriptionEqualFold", "descriptionContainsFold", "channelType", "channelTypeNEQ", "channelTypeIn", "channelTypeNotIn", "channelTypeGT", "channelTypeGTE", "channelTypeLT", "channelTypeLTE", "channelTypeContains", "channelTypeHasPrefix", "channelTypeHasSuffix", "channelTypeEqualFold", "channelTypeContainsFold", "overrideParameters", "overrideParametersNEQ", "overrideParametersIn", "overrideParametersNotIn", "overrideParametersGT", "overrideParametersGTE", "overrideParametersLT", "overrideParametersLTE", "overrideParametersContains", "overrideParametersHasPrefix", "overrideParametersHasSuffix", "overrideParametersEqualFold", "overrideParametersContainsFold", "hasUser", "hasUserWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -45087,62 +44684,6 @@ func (ec *executionContext) unmarshalInputChannelOverrideTemplateWhereInput(ctx 
 				return it, err
 			}
 			it.UpdatedAtLTE = data
-		case "deletedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAt"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAt = data
-		case "deletedAtNEQ":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNEQ"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNEQ = data
-		case "deletedAtIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtIn = data
-		case "deletedAtNotIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNotIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNotIn = data
-		case "deletedAtGT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGT = data
-		case "deletedAtGTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGTE = data
-		case "deletedAtLT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLT = data
-		case "deletedAtLTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLTE = data
 		case "userID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐGUID(ctx, v)
@@ -45630,7 +45171,7 @@ func (ec *executionContext) unmarshalInputChannelPerformanceWhereInput(ctx conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "channelID", "channelIDNEQ", "channelIDIn", "channelIDNotIn", "successRate", "successRateNEQ", "successRateIn", "successRateNotIn", "successRateGT", "successRateGTE", "successRateLT", "successRateLTE", "avgLatencyMs", "avgLatencyMsNEQ", "avgLatencyMsIn", "avgLatencyMsNotIn", "avgLatencyMsGT", "avgLatencyMsGTE", "avgLatencyMsLT", "avgLatencyMsLTE", "avgTokenPerSecond", "avgTokenPerSecondNEQ", "avgTokenPerSecondIn", "avgTokenPerSecondNotIn", "avgTokenPerSecondGT", "avgTokenPerSecondGTE", "avgTokenPerSecondLT", "avgTokenPerSecondLTE", "avgStreamFirstTokenLatencyMs", "avgStreamFirstTokenLatencyMsNEQ", "avgStreamFirstTokenLatencyMsIn", "avgStreamFirstTokenLatencyMsNotIn", "avgStreamFirstTokenLatencyMsGT", "avgStreamFirstTokenLatencyMsGTE", "avgStreamFirstTokenLatencyMsLT", "avgStreamFirstTokenLatencyMsLTE", "avgStreamTokenPerSecond", "avgStreamTokenPerSecondNEQ", "avgStreamTokenPerSecondIn", "avgStreamTokenPerSecondNotIn", "avgStreamTokenPerSecondGT", "avgStreamTokenPerSecondGTE", "avgStreamTokenPerSecondLT", "avgStreamTokenPerSecondLTE", "lastSuccessAt", "lastSuccessAtNEQ", "lastSuccessAtIn", "lastSuccessAtNotIn", "lastSuccessAtGT", "lastSuccessAtGTE", "lastSuccessAtLT", "lastSuccessAtLTE", "lastSuccessAtIsNil", "lastSuccessAtNotNil", "lastFailureAt", "lastFailureAtNEQ", "lastFailureAtIn", "lastFailureAtNotIn", "lastFailureAtGT", "lastFailureAtGTE", "lastFailureAtLT", "lastFailureAtLTE", "lastFailureAtIsNil", "lastFailureAtNotNil", "requestCount", "requestCountNEQ", "requestCountIn", "requestCountNotIn", "requestCountGT", "requestCountGTE", "requestCountLT", "requestCountLTE", "successCount", "successCountNEQ", "successCountIn", "successCountNotIn", "successCountGT", "successCountGTE", "successCountLT", "successCountLTE", "failureCount", "failureCountNEQ", "failureCountIn", "failureCountNotIn", "failureCountGT", "failureCountGTE", "failureCountLT", "failureCountLTE", "totalTokenCount", "totalTokenCountNEQ", "totalTokenCountIn", "totalTokenCountNotIn", "totalTokenCountGT", "totalTokenCountGTE", "totalTokenCountLT", "totalTokenCountLTE", "totalRequestLatencyMs", "totalRequestLatencyMsNEQ", "totalRequestLatencyMsIn", "totalRequestLatencyMsNotIn", "totalRequestLatencyMsGT", "totalRequestLatencyMsGTE", "totalRequestLatencyMsLT", "totalRequestLatencyMsLTE", "streamSuccessCount", "streamSuccessCountNEQ", "streamSuccessCountIn", "streamSuccessCountNotIn", "streamSuccessCountGT", "streamSuccessCountGTE", "streamSuccessCountLT", "streamSuccessCountLTE", "streamTotalRequestCount", "streamTotalRequestCountNEQ", "streamTotalRequestCountIn", "streamTotalRequestCountNotIn", "streamTotalRequestCountGT", "streamTotalRequestCountGTE", "streamTotalRequestCountLT", "streamTotalRequestCountLTE", "streamTotalTokenCount", "streamTotalTokenCountNEQ", "streamTotalTokenCountIn", "streamTotalTokenCountNotIn", "streamTotalTokenCountGT", "streamTotalTokenCountGTE", "streamTotalTokenCountLT", "streamTotalTokenCountLTE", "streamTotalRequestLatencyMs", "streamTotalRequestLatencyMsNEQ", "streamTotalRequestLatencyMsIn", "streamTotalRequestLatencyMsNotIn", "streamTotalRequestLatencyMsGT", "streamTotalRequestLatencyMsGTE", "streamTotalRequestLatencyMsLT", "streamTotalRequestLatencyMsLTE", "streamTotalFirstTokenLatencyMs", "streamTotalFirstTokenLatencyMsNEQ", "streamTotalFirstTokenLatencyMsIn", "streamTotalFirstTokenLatencyMsNotIn", "streamTotalFirstTokenLatencyMsGT", "streamTotalFirstTokenLatencyMsGTE", "streamTotalFirstTokenLatencyMsLT", "streamTotalFirstTokenLatencyMsLTE", "consecutiveFailures", "consecutiveFailuresNEQ", "consecutiveFailuresIn", "consecutiveFailuresNotIn", "consecutiveFailuresGT", "consecutiveFailuresGTE", "consecutiveFailuresLT", "consecutiveFailuresLTE", "hasChannel", "hasChannelWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "channelID", "channelIDNEQ", "channelIDIn", "channelIDNotIn", "successRate", "successRateNEQ", "successRateIn", "successRateNotIn", "successRateGT", "successRateGTE", "successRateLT", "successRateLTE", "avgLatencyMs", "avgLatencyMsNEQ", "avgLatencyMsIn", "avgLatencyMsNotIn", "avgLatencyMsGT", "avgLatencyMsGTE", "avgLatencyMsLT", "avgLatencyMsLTE", "avgTokenPerSecond", "avgTokenPerSecondNEQ", "avgTokenPerSecondIn", "avgTokenPerSecondNotIn", "avgTokenPerSecondGT", "avgTokenPerSecondGTE", "avgTokenPerSecondLT", "avgTokenPerSecondLTE", "avgStreamFirstTokenLatencyMs", "avgStreamFirstTokenLatencyMsNEQ", "avgStreamFirstTokenLatencyMsIn", "avgStreamFirstTokenLatencyMsNotIn", "avgStreamFirstTokenLatencyMsGT", "avgStreamFirstTokenLatencyMsGTE", "avgStreamFirstTokenLatencyMsLT", "avgStreamFirstTokenLatencyMsLTE", "avgStreamTokenPerSecond", "avgStreamTokenPerSecondNEQ", "avgStreamTokenPerSecondIn", "avgStreamTokenPerSecondNotIn", "avgStreamTokenPerSecondGT", "avgStreamTokenPerSecondGTE", "avgStreamTokenPerSecondLT", "avgStreamTokenPerSecondLTE", "lastSuccessAt", "lastSuccessAtNEQ", "lastSuccessAtIn", "lastSuccessAtNotIn", "lastSuccessAtGT", "lastSuccessAtGTE", "lastSuccessAtLT", "lastSuccessAtLTE", "lastSuccessAtIsNil", "lastSuccessAtNotNil", "lastFailureAt", "lastFailureAtNEQ", "lastFailureAtIn", "lastFailureAtNotIn", "lastFailureAtGT", "lastFailureAtGTE", "lastFailureAtLT", "lastFailureAtLTE", "lastFailureAtIsNil", "lastFailureAtNotNil", "requestCount", "requestCountNEQ", "requestCountIn", "requestCountNotIn", "requestCountGT", "requestCountGTE", "requestCountLT", "requestCountLTE", "successCount", "successCountNEQ", "successCountIn", "successCountNotIn", "successCountGT", "successCountGTE", "successCountLT", "successCountLTE", "failureCount", "failureCountNEQ", "failureCountIn", "failureCountNotIn", "failureCountGT", "failureCountGTE", "failureCountLT", "failureCountLTE", "totalTokenCount", "totalTokenCountNEQ", "totalTokenCountIn", "totalTokenCountNotIn", "totalTokenCountGT", "totalTokenCountGTE", "totalTokenCountLT", "totalTokenCountLTE", "totalRequestLatencyMs", "totalRequestLatencyMsNEQ", "totalRequestLatencyMsIn", "totalRequestLatencyMsNotIn", "totalRequestLatencyMsGT", "totalRequestLatencyMsGTE", "totalRequestLatencyMsLT", "totalRequestLatencyMsLTE", "streamSuccessCount", "streamSuccessCountNEQ", "streamSuccessCountIn", "streamSuccessCountNotIn", "streamSuccessCountGT", "streamSuccessCountGTE", "streamSuccessCountLT", "streamSuccessCountLTE", "streamTotalRequestCount", "streamTotalRequestCountNEQ", "streamTotalRequestCountIn", "streamTotalRequestCountNotIn", "streamTotalRequestCountGT", "streamTotalRequestCountGTE", "streamTotalRequestCountLT", "streamTotalRequestCountLTE", "streamTotalTokenCount", "streamTotalTokenCountNEQ", "streamTotalTokenCountIn", "streamTotalTokenCountNotIn", "streamTotalTokenCountGT", "streamTotalTokenCountGTE", "streamTotalTokenCountLT", "streamTotalTokenCountLTE", "streamTotalRequestLatencyMs", "streamTotalRequestLatencyMsNEQ", "streamTotalRequestLatencyMsIn", "streamTotalRequestLatencyMsNotIn", "streamTotalRequestLatencyMsGT", "streamTotalRequestLatencyMsGTE", "streamTotalRequestLatencyMsLT", "streamTotalRequestLatencyMsLTE", "streamTotalFirstTokenLatencyMs", "streamTotalFirstTokenLatencyMsNEQ", "streamTotalFirstTokenLatencyMsIn", "streamTotalFirstTokenLatencyMsNotIn", "streamTotalFirstTokenLatencyMsGT", "streamTotalFirstTokenLatencyMsGTE", "streamTotalFirstTokenLatencyMsLT", "streamTotalFirstTokenLatencyMsLTE", "consecutiveFailures", "consecutiveFailuresNEQ", "consecutiveFailuresIn", "consecutiveFailuresNotIn", "consecutiveFailuresGT", "consecutiveFailuresGTE", "consecutiveFailuresLT", "consecutiveFailuresLTE", "hasChannel", "hasChannelWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -45858,62 +45399,6 @@ func (ec *executionContext) unmarshalInputChannelPerformanceWhereInput(ctx conte
 				return it, err
 			}
 			it.UpdatedAtLTE = data
-		case "deletedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAt"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAt = data
-		case "deletedAtNEQ":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNEQ"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNEQ = data
-		case "deletedAtIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtIn = data
-		case "deletedAtNotIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNotIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNotIn = data
-		case "deletedAtGT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGT = data
-		case "deletedAtGTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGTE = data
-		case "deletedAtLT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLT = data
-		case "deletedAtLTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLTE = data
 		case "channelID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("channelID"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐGUID(ctx, v)
@@ -47561,7 +47046,7 @@ func (ec *executionContext) unmarshalInputChannelWhereInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "type", "typeNEQ", "typeIn", "typeNotIn", "baseURL", "baseURLNEQ", "baseURLIn", "baseURLNotIn", "baseURLGT", "baseURLGTE", "baseURLLT", "baseURLLTE", "baseURLContains", "baseURLHasPrefix", "baseURLHasSuffix", "baseURLIsNil", "baseURLNotNil", "baseURLEqualFold", "baseURLContainsFold", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "autoSyncSupportedModels", "autoSyncSupportedModelsNEQ", "defaultTestModel", "defaultTestModelNEQ", "defaultTestModelIn", "defaultTestModelNotIn", "defaultTestModelGT", "defaultTestModelGTE", "defaultTestModelLT", "defaultTestModelLTE", "defaultTestModelContains", "defaultTestModelHasPrefix", "defaultTestModelHasSuffix", "defaultTestModelEqualFold", "defaultTestModelContainsFold", "orderingWeight", "orderingWeightNEQ", "orderingWeightIn", "orderingWeightNotIn", "orderingWeightGT", "orderingWeightGTE", "orderingWeightLT", "orderingWeightLTE", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "remark", "remarkNEQ", "remarkIn", "remarkNotIn", "remarkGT", "remarkGTE", "remarkLT", "remarkLTE", "remarkContains", "remarkHasPrefix", "remarkHasSuffix", "remarkIsNil", "remarkNotNil", "remarkEqualFold", "remarkContainsFold", "hasRequests", "hasRequestsWith", "hasExecutions", "hasExecutionsWith", "hasUsageLogs", "hasUsageLogsWith", "hasChannelPerformance", "hasChannelPerformanceWith", "hasChannelProbes", "hasChannelProbesWith", "hasChannelModelPrices", "hasChannelModelPricesWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "type", "typeNEQ", "typeIn", "typeNotIn", "baseURL", "baseURLNEQ", "baseURLIn", "baseURLNotIn", "baseURLGT", "baseURLGTE", "baseURLLT", "baseURLLTE", "baseURLContains", "baseURLHasPrefix", "baseURLHasSuffix", "baseURLIsNil", "baseURLNotNil", "baseURLEqualFold", "baseURLContainsFold", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "autoSyncSupportedModels", "autoSyncSupportedModelsNEQ", "defaultTestModel", "defaultTestModelNEQ", "defaultTestModelIn", "defaultTestModelNotIn", "defaultTestModelGT", "defaultTestModelGTE", "defaultTestModelLT", "defaultTestModelLTE", "defaultTestModelContains", "defaultTestModelHasPrefix", "defaultTestModelHasSuffix", "defaultTestModelEqualFold", "defaultTestModelContainsFold", "orderingWeight", "orderingWeightNEQ", "orderingWeightIn", "orderingWeightNotIn", "orderingWeightGT", "orderingWeightGTE", "orderingWeightLT", "orderingWeightLTE", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "remark", "remarkNEQ", "remarkIn", "remarkNotIn", "remarkGT", "remarkGTE", "remarkLT", "remarkLTE", "remarkContains", "remarkHasPrefix", "remarkHasSuffix", "remarkIsNil", "remarkNotNil", "remarkEqualFold", "remarkContainsFold", "hasRequests", "hasRequestsWith", "hasExecutions", "hasExecutionsWith", "hasUsageLogs", "hasUsageLogsWith", "hasChannelPerformance", "hasChannelPerformanceWith", "hasChannelProbes", "hasChannelProbesWith", "hasChannelModelPrices", "hasChannelModelPricesWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -47789,62 +47274,6 @@ func (ec *executionContext) unmarshalInputChannelWhereInput(ctx context.Context,
 				return it, err
 			}
 			it.UpdatedAtLTE = data
-		case "deletedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAt"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAt = data
-		case "deletedAtNEQ":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNEQ"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNEQ = data
-		case "deletedAtIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtIn = data
-		case "deletedAtNotIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNotIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNotIn = data
-		case "deletedAtGT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGT = data
-		case "deletedAtGTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGTE = data
-		case "deletedAtLT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLT = data
-		case "deletedAtLTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLTE = data
 		case "type":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
 			data, err := ec.unmarshalOChannelType2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋentᚋchannelᚐType(ctx, v)
@@ -49929,7 +49358,7 @@ func (ec *executionContext) unmarshalInputDataStorageWhereInput(ctx context.Cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionEqualFold", "descriptionContainsFold", "primary", "primaryNEQ", "type", "typeNEQ", "typeIn", "typeNotIn", "status", "statusNEQ", "statusIn", "statusNotIn", "hasRequests", "hasRequestsWith", "hasExecutions", "hasExecutionsWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionEqualFold", "descriptionContainsFold", "primary", "primaryNEQ", "type", "typeNEQ", "typeIn", "typeNotIn", "status", "statusNEQ", "statusIn", "statusNotIn", "hasRequests", "hasRequestsWith", "hasExecutions", "hasExecutionsWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -50157,62 +49586,6 @@ func (ec *executionContext) unmarshalInputDataStorageWhereInput(ctx context.Cont
 				return it, err
 			}
 			it.UpdatedAtLTE = data
-		case "deletedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAt"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAt = data
-		case "deletedAtNEQ":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNEQ"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNEQ = data
-		case "deletedAtIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtIn = data
-		case "deletedAtNotIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNotIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNotIn = data
-		case "deletedAtGT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGT = data
-		case "deletedAtGTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGTE = data
-		case "deletedAtLT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLT = data
-		case "deletedAtLTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLTE = data
 		case "name":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -51311,7 +50684,7 @@ func (ec *executionContext) unmarshalInputModelWhereInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "developer", "developerNEQ", "developerIn", "developerNotIn", "developerGT", "developerGTE", "developerLT", "developerLTE", "developerContains", "developerHasPrefix", "developerHasSuffix", "developerEqualFold", "developerContainsFold", "modelID", "modelIDNEQ", "modelIDIn", "modelIDNotIn", "modelIDGT", "modelIDGTE", "modelIDLT", "modelIDLTE", "modelIDContains", "modelIDHasPrefix", "modelIDHasSuffix", "modelIDEqualFold", "modelIDContainsFold", "type", "typeNEQ", "typeIn", "typeNotIn", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "icon", "iconNEQ", "iconIn", "iconNotIn", "iconGT", "iconGTE", "iconLT", "iconLTE", "iconContains", "iconHasPrefix", "iconHasSuffix", "iconEqualFold", "iconContainsFold", "group", "groupNEQ", "groupIn", "groupNotIn", "groupGT", "groupGTE", "groupLT", "groupLTE", "groupContains", "groupHasPrefix", "groupHasSuffix", "groupEqualFold", "groupContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "remark", "remarkNEQ", "remarkIn", "remarkNotIn", "remarkGT", "remarkGTE", "remarkLT", "remarkLTE", "remarkContains", "remarkHasPrefix", "remarkHasSuffix", "remarkIsNil", "remarkNotNil", "remarkEqualFold", "remarkContainsFold"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "developer", "developerNEQ", "developerIn", "developerNotIn", "developerGT", "developerGTE", "developerLT", "developerLTE", "developerContains", "developerHasPrefix", "developerHasSuffix", "developerEqualFold", "developerContainsFold", "modelID", "modelIDNEQ", "modelIDIn", "modelIDNotIn", "modelIDGT", "modelIDGTE", "modelIDLT", "modelIDLTE", "modelIDContains", "modelIDHasPrefix", "modelIDHasSuffix", "modelIDEqualFold", "modelIDContainsFold", "type", "typeNEQ", "typeIn", "typeNotIn", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "icon", "iconNEQ", "iconIn", "iconNotIn", "iconGT", "iconGTE", "iconLT", "iconLTE", "iconContains", "iconHasPrefix", "iconHasSuffix", "iconEqualFold", "iconContainsFold", "group", "groupNEQ", "groupIn", "groupNotIn", "groupGT", "groupGTE", "groupLT", "groupLTE", "groupContains", "groupHasPrefix", "groupHasSuffix", "groupEqualFold", "groupContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "remark", "remarkNEQ", "remarkIn", "remarkNotIn", "remarkGT", "remarkGTE", "remarkLT", "remarkLTE", "remarkContains", "remarkHasPrefix", "remarkHasSuffix", "remarkIsNil", "remarkNotNil", "remarkEqualFold", "remarkContainsFold"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -51539,62 +50912,6 @@ func (ec *executionContext) unmarshalInputModelWhereInput(ctx context.Context, o
 				return it, err
 			}
 			it.UpdatedAtLTE = data
-		case "deletedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAt"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAt = data
-		case "deletedAtNEQ":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNEQ"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNEQ = data
-		case "deletedAtIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtIn = data
-		case "deletedAtNotIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNotIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNotIn = data
-		case "deletedAtGT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGT = data
-		case "deletedAtGTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGTE = data
-		case "deletedAtLT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLT = data
-		case "deletedAtLTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLTE = data
 		case "developer":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("developer"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -52217,6 +51534,68 @@ func (ec *executionContext) unmarshalInputModelWhereInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputOAuthCredentialsInput(ctx context.Context, obj any) (oauth.OAuthCredentials, error) {
+	var it oauth.OAuthCredentials
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessToken", "refreshToken", "clientID", "expiresAt", "tokenType", "scopes"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessToken":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessToken"))
+			data, err := ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessToken = data
+		case "refreshToken":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("refreshToken"))
+			data, err := ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RefreshToken = data
+		case "clientID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientID"))
+			data, err := ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClientID = data
+		case "expiresAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expiresAt"))
+			data, err := ec.unmarshalOTime2timeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExpiresAt = data
+		case "tokenType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenType"))
+			data, err := ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenType = data
+		case "scopes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scopes"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Scopes = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputPriceTierInput(ctx context.Context, obj any) (objects.PriceTier, error) {
 	var it objects.PriceTier
 	asMap := map[string]any{}
@@ -52344,7 +51723,7 @@ func (ec *executionContext) unmarshalInputProjectWhereInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionEqualFold", "descriptionContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "hasUsers", "hasUsersWith", "hasRoles", "hasRolesWith", "hasAPIKeys", "hasAPIKeysWith", "hasRequests", "hasRequestsWith", "hasUsageLogs", "hasUsageLogsWith", "hasThreads", "hasThreadsWith", "hasTraces", "hasTracesWith", "hasPrompts", "hasPromptsWith", "hasProjectUsers", "hasProjectUsersWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionEqualFold", "descriptionContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "hasUsers", "hasUsersWith", "hasRoles", "hasRolesWith", "hasAPIKeys", "hasAPIKeysWith", "hasRequests", "hasRequestsWith", "hasUsageLogs", "hasUsageLogsWith", "hasThreads", "hasThreadsWith", "hasTraces", "hasTracesWith", "hasPrompts", "hasPromptsWith", "hasProjectUsers", "hasProjectUsersWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -52572,62 +51951,6 @@ func (ec *executionContext) unmarshalInputProjectWhereInput(ctx context.Context,
 				return it, err
 			}
 			it.UpdatedAtLTE = data
-		case "deletedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAt"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAt = data
-		case "deletedAtNEQ":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNEQ"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNEQ = data
-		case "deletedAtIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtIn = data
-		case "deletedAtNotIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNotIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNotIn = data
-		case "deletedAtGT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGT = data
-		case "deletedAtGTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGTE = data
-		case "deletedAtLT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLT = data
-		case "deletedAtLTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLTE = data
 		case "name":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -53144,7 +52467,7 @@ func (ec *executionContext) unmarshalInputPromptWhereInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "projectID", "projectIDNEQ", "projectIDIn", "projectIDNotIn", "projectIDGT", "projectIDGTE", "projectIDLT", "projectIDLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionEqualFold", "descriptionContainsFold", "role", "roleNEQ", "roleIn", "roleNotIn", "roleGT", "roleGTE", "roleLT", "roleLTE", "roleContains", "roleHasPrefix", "roleHasSuffix", "roleEqualFold", "roleContainsFold", "content", "contentNEQ", "contentIn", "contentNotIn", "contentGT", "contentGTE", "contentLT", "contentLTE", "contentContains", "contentHasPrefix", "contentHasSuffix", "contentEqualFold", "contentContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "hasProjects", "hasProjectsWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "projectID", "projectIDNEQ", "projectIDIn", "projectIDNotIn", "projectIDGT", "projectIDGTE", "projectIDLT", "projectIDLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "description", "descriptionNEQ", "descriptionIn", "descriptionNotIn", "descriptionGT", "descriptionGTE", "descriptionLT", "descriptionLTE", "descriptionContains", "descriptionHasPrefix", "descriptionHasSuffix", "descriptionEqualFold", "descriptionContainsFold", "role", "roleNEQ", "roleIn", "roleNotIn", "roleGT", "roleGTE", "roleLT", "roleLTE", "roleContains", "roleHasPrefix", "roleHasSuffix", "roleEqualFold", "roleContainsFold", "content", "contentNEQ", "contentIn", "contentNotIn", "contentGT", "contentGTE", "contentLT", "contentLTE", "contentContains", "contentHasPrefix", "contentHasSuffix", "contentEqualFold", "contentContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "hasProjects", "hasProjectsWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -53372,62 +52695,6 @@ func (ec *executionContext) unmarshalInputPromptWhereInput(ctx context.Context, 
 				return it, err
 			}
 			it.UpdatedAtLTE = data
-		case "deletedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAt"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAt = data
-		case "deletedAtNEQ":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNEQ"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNEQ = data
-		case "deletedAtIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtIn = data
-		case "deletedAtNotIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNotIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNotIn = data
-		case "deletedAtGT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGT = data
-		case "deletedAtGTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGTE = data
-		case "deletedAtLT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLT = data
-		case "deletedAtLTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLTE = data
 		case "projectID":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectID"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
@@ -56695,7 +55962,7 @@ func (ec *executionContext) unmarshalInputRoleWhereInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "level", "levelNEQ", "levelIn", "levelNotIn", "projectID", "projectIDNEQ", "projectIDIn", "projectIDNotIn", "projectIDIsNil", "projectIDNotNil", "hasUsers", "hasUsersWith", "hasProject", "hasProjectWith", "hasUserRoles", "hasUserRolesWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "level", "levelNEQ", "levelIn", "levelNotIn", "projectID", "projectIDNEQ", "projectIDIn", "projectIDNotIn", "projectIDIsNil", "projectIDNotNil", "hasUsers", "hasUsersWith", "hasProject", "hasProjectWith", "hasUserRoles", "hasUserRolesWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -56923,62 +56190,6 @@ func (ec *executionContext) unmarshalInputRoleWhereInput(ctx context.Context, ob
 				return it, err
 			}
 			it.UpdatedAtLTE = data
-		case "deletedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAt"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAt = data
-		case "deletedAtNEQ":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNEQ"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNEQ = data
-		case "deletedAtIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtIn = data
-		case "deletedAtNotIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNotIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNotIn = data
-		case "deletedAtGT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGT = data
-		case "deletedAtGTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGTE = data
-		case "deletedAtLT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLT = data
-		case "deletedAtLTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLTE = data
 		case "name":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -57372,7 +56583,7 @@ func (ec *executionContext) unmarshalInputSystemWhereInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "key", "keyNEQ", "keyIn", "keyNotIn", "keyGT", "keyGTE", "keyLT", "keyLTE", "keyContains", "keyHasPrefix", "keyHasSuffix", "keyEqualFold", "keyContainsFold", "value", "valueNEQ", "valueIn", "valueNotIn", "valueGT", "valueGTE", "valueLT", "valueLTE", "valueContains", "valueHasPrefix", "valueHasSuffix", "valueEqualFold", "valueContainsFold"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "key", "keyNEQ", "keyIn", "keyNotIn", "keyGT", "keyGTE", "keyLT", "keyLTE", "keyContains", "keyHasPrefix", "keyHasSuffix", "keyEqualFold", "keyContainsFold", "value", "valueNEQ", "valueIn", "valueNotIn", "valueGT", "valueGTE", "valueLT", "valueLTE", "valueContains", "valueHasPrefix", "valueHasSuffix", "valueEqualFold", "valueContainsFold"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -57600,62 +56811,6 @@ func (ec *executionContext) unmarshalInputSystemWhereInput(ctx context.Context, 
 				return it, err
 			}
 			it.UpdatedAtLTE = data
-		case "deletedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAt"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAt = data
-		case "deletedAtNEQ":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNEQ"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNEQ = data
-		case "deletedAtIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtIn = data
-		case "deletedAtNotIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNotIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNotIn = data
-		case "deletedAtGT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGT = data
-		case "deletedAtGTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGTE = data
-		case "deletedAtLT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLT = data
-		case "deletedAtLTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLTE = data
 		case "key":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -63028,7 +62183,7 @@ func (ec *executionContext) unmarshalInputUserWhereInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "email", "emailNEQ", "emailIn", "emailNotIn", "emailGT", "emailGTE", "emailLT", "emailLTE", "emailContains", "emailHasPrefix", "emailHasSuffix", "emailEqualFold", "emailContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "preferLanguage", "preferLanguageNEQ", "preferLanguageIn", "preferLanguageNotIn", "preferLanguageGT", "preferLanguageGTE", "preferLanguageLT", "preferLanguageLTE", "preferLanguageContains", "preferLanguageHasPrefix", "preferLanguageHasSuffix", "preferLanguageEqualFold", "preferLanguageContainsFold", "firstName", "firstNameNEQ", "firstNameIn", "firstNameNotIn", "firstNameGT", "firstNameGTE", "firstNameLT", "firstNameLTE", "firstNameContains", "firstNameHasPrefix", "firstNameHasSuffix", "firstNameEqualFold", "firstNameContainsFold", "lastName", "lastNameNEQ", "lastNameIn", "lastNameNotIn", "lastNameGT", "lastNameGTE", "lastNameLT", "lastNameLTE", "lastNameContains", "lastNameHasPrefix", "lastNameHasSuffix", "lastNameEqualFold", "lastNameContainsFold", "avatar", "avatarNEQ", "avatarIn", "avatarNotIn", "avatarGT", "avatarGTE", "avatarLT", "avatarLTE", "avatarContains", "avatarHasPrefix", "avatarHasSuffix", "avatarIsNil", "avatarNotNil", "avatarEqualFold", "avatarContainsFold", "isOwner", "isOwnerNEQ", "hasProjects", "hasProjectsWith", "hasAPIKeys", "hasAPIKeysWith", "hasRoles", "hasRolesWith", "hasChannelOverrideTemplates", "hasChannelOverrideTemplatesWith", "hasProjectUsers", "hasProjectUsersWith", "hasUserRoles", "hasUserRolesWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "email", "emailNEQ", "emailIn", "emailNotIn", "emailGT", "emailGTE", "emailLT", "emailLTE", "emailContains", "emailHasPrefix", "emailHasSuffix", "emailEqualFold", "emailContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "preferLanguage", "preferLanguageNEQ", "preferLanguageIn", "preferLanguageNotIn", "preferLanguageGT", "preferLanguageGTE", "preferLanguageLT", "preferLanguageLTE", "preferLanguageContains", "preferLanguageHasPrefix", "preferLanguageHasSuffix", "preferLanguageEqualFold", "preferLanguageContainsFold", "firstName", "firstNameNEQ", "firstNameIn", "firstNameNotIn", "firstNameGT", "firstNameGTE", "firstNameLT", "firstNameLTE", "firstNameContains", "firstNameHasPrefix", "firstNameHasSuffix", "firstNameEqualFold", "firstNameContainsFold", "lastName", "lastNameNEQ", "lastNameIn", "lastNameNotIn", "lastNameGT", "lastNameGTE", "lastNameLT", "lastNameLTE", "lastNameContains", "lastNameHasPrefix", "lastNameHasSuffix", "lastNameEqualFold", "lastNameContainsFold", "avatar", "avatarNEQ", "avatarIn", "avatarNotIn", "avatarGT", "avatarGTE", "avatarLT", "avatarLTE", "avatarContains", "avatarHasPrefix", "avatarHasSuffix", "avatarIsNil", "avatarNotNil", "avatarEqualFold", "avatarContainsFold", "isOwner", "isOwnerNEQ", "hasProjects", "hasProjectsWith", "hasAPIKeys", "hasAPIKeysWith", "hasRoles", "hasRolesWith", "hasChannelOverrideTemplates", "hasChannelOverrideTemplatesWith", "hasProjectUsers", "hasProjectUsersWith", "hasUserRoles", "hasUserRolesWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -63256,62 +62411,6 @@ func (ec *executionContext) unmarshalInputUserWhereInput(ctx context.Context, ob
 				return it, err
 			}
 			it.UpdatedAtLTE = data
-		case "deletedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAt"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAt = data
-		case "deletedAtNEQ":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNEQ"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNEQ = data
-		case "deletedAtIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtIn = data
-		case "deletedAtNotIn":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtNotIn"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtNotIn = data
-		case "deletedAtGT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGT = data
-		case "deletedAtGTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtGTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtGTE = data
-		case "deletedAtLT":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLT"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLT = data
-		case "deletedAtLTE":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deletedAtLTE"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DeletedAtLTE = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -64089,11 +63188,6 @@ func (ec *executionContext) _APIKey(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "updatedAt":
 			out.Values[i] = ec._APIKey_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "deletedAt":
-			out.Values[i] = ec._APIKey_deletedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -65101,11 +64195,6 @@ func (ec *executionContext) _Channel(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "deletedAt":
-			out.Values[i] = ec._Channel_deletedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "type":
 			out.Values[i] = ec._Channel_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -65513,6 +64602,8 @@ func (ec *executionContext) _ChannelCredentials(ctx context.Context, sel ast.Sel
 			out.Values[i] = ec._ChannelCredentials_aws(ctx, field, obj)
 		case "gcp":
 			out.Values[i] = ec._ChannelCredentials_gcp(ctx, field, obj)
+		case "oauth":
+			out.Values[i] = ec._ChannelCredentials_oauth(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -65724,11 +64815,6 @@ func (ec *executionContext) _ChannelModelPrice(ctx context.Context, sel ast.Sele
 			}
 		case "updatedAt":
 			out.Values[i] = ec._ChannelModelPrice_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "deletedAt":
-			out.Values[i] = ec._ChannelModelPrice_deletedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -66290,11 +65376,6 @@ func (ec *executionContext) _ChannelOverrideTemplate(ctx context.Context, sel as
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "deletedAt":
-			out.Values[i] = ec._ChannelOverrideTemplate_deletedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "userID":
 			field := field
 
@@ -66553,11 +65634,6 @@ func (ec *executionContext) _ChannelPerformance(ctx context.Context, sel ast.Sel
 			}
 		case "updatedAt":
 			out.Values[i] = ec._ChannelPerformance_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "deletedAt":
-			out.Values[i] = ec._ChannelPerformance_deletedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -67619,11 +66695,6 @@ func (ec *executionContext) _DataStorage(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "deletedAt":
-			out.Values[i] = ec._DataStorage_deletedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "name":
 			out.Values[i] = ec._DataStorage_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -68237,11 +67308,6 @@ func (ec *executionContext) _Model(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "updatedAt":
 			out.Values[i] = ec._Model_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "deletedAt":
-			out.Values[i] = ec._Model_deletedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -69604,6 +68670,52 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	return out
 }
 
+var oAuthCredentialsImplementors = []string{"OAuthCredentials"}
+
+func (ec *executionContext) _OAuthCredentials(ctx context.Context, sel ast.SelectionSet, obj *oauth.OAuthCredentials) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, oAuthCredentialsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OAuthCredentials")
+		case "accessToken":
+			out.Values[i] = ec._OAuthCredentials_accessToken(ctx, field, obj)
+		case "refreshToken":
+			out.Values[i] = ec._OAuthCredentials_refreshToken(ctx, field, obj)
+		case "clientID":
+			out.Values[i] = ec._OAuthCredentials_clientID(ctx, field, obj)
+		case "expiresAt":
+			out.Values[i] = ec._OAuthCredentials_expiresAt(ctx, field, obj)
+		case "tokenType":
+			out.Values[i] = ec._OAuthCredentials_tokenType(ctx, field, obj)
+		case "scopes":
+			out.Values[i] = ec._OAuthCredentials_scopes(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var onboardingInfoImplementors = []string{"OnboardingInfo"}
 
 func (ec *executionContext) _OnboardingInfo(ctx context.Context, sel ast.SelectionSet, obj *OnboardingInfo) graphql.Marshaler {
@@ -69840,11 +68952,6 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "updatedAt":
 			out.Values[i] = ec._Project_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "deletedAt":
-			out.Values[i] = ec._Project_deletedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -70348,11 +69455,6 @@ func (ec *executionContext) _Prompt(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "updatedAt":
 			out.Values[i] = ec._Prompt_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "deletedAt":
-			out.Values[i] = ec._Prompt_deletedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -73570,11 +72672,6 @@ func (ec *executionContext) _Role(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "deletedAt":
-			out.Values[i] = ec._Role_deletedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "name":
 			out.Values[i] = ec._Role_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -74657,11 +73754,6 @@ func (ec *executionContext) _System(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "updatedAt":
 			out.Values[i] = ec._System_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "deletedAt":
-			out.Values[i] = ec._System_deletedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -76893,11 +75985,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "updatedAt":
 			out.Values[i] = ec._User_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "deletedAt":
-			out.Values[i] = ec._User_deletedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -84896,6 +83983,21 @@ func (ec *executionContext) marshalONode2githubᚗcomᚋloopljᚋaxonhubᚋinter
 	return ec._Node(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOOAuthCredentials2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋllmᚋoauthᚐOAuthCredentials(ctx context.Context, sel ast.SelectionSet, v *oauth.OAuthCredentials) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._OAuthCredentials(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOOAuthCredentialsInput2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋllmᚋoauthᚐOAuthCredentials(ctx context.Context, v any) (*oauth.OAuthCredentials, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputOAuthCredentialsInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalOOnboardingInfo2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋgqlᚐOnboardingInfo(ctx context.Context, sel ast.SelectionSet, v *OnboardingInfo) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -86598,6 +85700,18 @@ func (ec *executionContext) unmarshalOTieredPricingInput2ᚖgithubᚗcomᚋloopl
 	}
 	res, err := ec.unmarshalInputTieredPricingInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {
+	res, err := graphql.UnmarshalTime(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalTime(v)
+	return res
 }
 
 func (ec *executionContext) unmarshalOTime2ᚕtimeᚐTimeᚄ(ctx context.Context, v any) ([]time.Time, error) {
