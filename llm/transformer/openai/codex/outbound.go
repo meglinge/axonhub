@@ -20,6 +20,15 @@ import (
 
 const codexAPIURL = "https://chatgpt.com/backend-api/codex/responses"
 
+const codexDefaultVersion = "0.21.0"
+
+var codexHeaders = [][]string{
+	{"Accept", "text/event-stream"},
+	{"Connection", "Keep-Alive"},
+	{"Openai-Beta", "responses=experimental"},
+	{"Originator", "codex_cli_rs"},
+}
+
 // OutboundTransformer implements transformer.Outbound for Codex proxy.
 // It always talks to the Codex Responses upstream (SSE only) and adapts requests accordingly.
 //
@@ -28,7 +37,7 @@ const codexAPIURL = "https://chatgpt.com/backend-api/codex/responses"
 //
 //nolint:containedctx // It is used as a transformer.
 type OutboundTransformer struct {
-	tokens *oauth.TokenProvider
+	tokens oauth.TokenGetter
 
 	// reuse existing Responses outbound for payload building.
 	responsesOutbound *responses.OutboundTransformer
@@ -40,27 +49,12 @@ var (
 )
 
 type Params struct {
-	CredentialsJSON string
-
-	// HTTPClient should be pre-configured with proxy settings if needed.
-	HTTPClient *httpclient.HttpClient
-
-	// OnRefreshed will be invoked when the token refreshed.
-	OnRefreshed func(ctx context.Context, refreshed *oauth.OAuthCredentials) error
+	TokenProvider oauth.TokenGetter
 }
 
 func NewOutboundTransformer(params Params) (*OutboundTransformer, error) {
-	if params.CredentialsJSON == "" {
-		return nil, errors.New("credentials json is empty")
-	}
-
-	if params.HTTPClient == nil {
-		return nil, errors.New("http client is required")
-	}
-
-	creds, err := oauth.ParseCredentialsJSON(params.CredentialsJSON)
-	if err != nil {
-		return nil, err
+	if params.TokenProvider == nil {
+		return nil, errors.New("token provider is required")
 	}
 
 	// The underlying responses outbound requires baseURL/apiKey. We only need its request body logic.
@@ -71,11 +65,7 @@ func NewOutboundTransformer(params Params) (*OutboundTransformer, error) {
 	}
 
 	return &OutboundTransformer{
-		tokens: NewTokenProvider(TokenProviderParams{
-			Credentials: creds,
-			HTTPClient:  params.HTTPClient,
-			OnRefreshed: params.OnRefreshed,
-		}),
+		tokens:            params.TokenProvider,
 		responsesOutbound: ro,
 	}, nil
 }
@@ -91,6 +81,35 @@ func (t *OutboundTransformer) TransformError(ctx context.Context, rawErr *httpcl
 func (t *OutboundTransformer) TransformRequest(ctx context.Context, llmReq *llm.Request) (*httpclient.Request, error) {
 	if llmReq == nil {
 		return nil, errors.New("request is nil")
+	}
+
+	rawUA := ""
+	keepClientUA := false
+	rawVersion := ""
+	keepClientVersion := false
+	rawSessionID := ""
+
+	if llmReq.RawRequest != nil && llmReq.RawRequest.Headers != nil {
+		rawUA = llmReq.RawRequest.Headers.Get("User-Agent")
+		keepClientUA = isCodexCLIUserAgent(rawUA)
+		rawVersion = llmReq.RawRequest.Headers.Get("Version")
+		keepClientVersion = keepClientUA && isCodexCLIVersion(rawVersion)
+		rawSessionID = llmReq.RawRequest.Headers.Get("Session_id")
+
+		for _, header := range codexHeaders {
+			llmReq.RawRequest.Headers.Del(header[0])
+		}
+
+		llmReq.RawRequest.Headers.Del("Conversation_id")
+		llmReq.RawRequest.Headers.Del("Chatgpt-Account-Id")
+
+		if !keepClientVersion {
+			llmReq.RawRequest.Headers.Del("Version")
+		}
+
+		if !keepClientUA {
+			llmReq.RawRequest.Headers.Del("User-Agent")
+		}
 	}
 
 	creds, err := t.tokens.Get(ctx)
@@ -148,18 +167,31 @@ func (t *OutboundTransformer) TransformRequest(ctx context.Context, llmReq *llm.
 	hreq.URL = codexAPIURL
 
 	// Codex upstream expects SSE.
-	hreq.Headers.Set("Accept", "text/event-stream")
-	hreq.Headers.Set("Connection", "Keep-Alive")
-	hreq.Headers.Set("Openai-Beta", "responses=experimental")
-	hreq.Headers.Set("Originator", "codex_cli_rs")
-	hreq.Headers.Set("Session_id", uuid.NewString())
-	hreq.Headers.Set("Version", "0.21.0")
+	for _, header := range codexHeaders {
+		hreq.Headers.Set(header[0], header[1])
+	}
 
 	// Overwrite auth.
 	hreq.Auth = &httpclient.AuthConfig{Type: httpclient.AuthTypeBearer, APIKey: creds.AccessToken}
 
 	// Keep Codex-specific headers.
-	hreq.Headers.Set("User-Agent", UserAgent)
+	if keepClientUA && rawUA != "" {
+		hreq.Headers.Set("User-Agent", rawUA)
+	} else {
+		hreq.Headers.Set("User-Agent", UserAgent)
+	}
+
+	if keepClientVersion && rawVersion != "" {
+		hreq.Headers.Set("Version", rawVersion)
+	} else {
+		hreq.Headers.Set("Version", codexDefaultVersion)
+	}
+
+	if rawSessionID != "" {
+		hreq.Headers.Set("Session_id", rawSessionID)
+	} else if hreq.Headers.Get("Session_id") == "" {
+		hreq.Headers.Set("Session_id", uuid.NewString())
+	}
 
 	if accountID != "" {
 		hreq.Headers.Set("Chatgpt-Account-Id", accountID)
@@ -233,11 +265,13 @@ type codexExecutor struct {
 
 func (e *codexExecutor) Do(ctx context.Context, request *httpclient.Request) (*httpclient.Response, error) {
 	// Ensure Codex-required headers are not overridden by inbound headers.
-	request.Headers.Set("Accept", "text/event-stream")
-	request.Headers.Set("User-Agent", UserAgent)
-	request.Headers.Set("Connection", "Keep-Alive")
-	request.Headers.Set("Openai-Beta", "responses=experimental")
-	request.Headers.Set("Originator", "codex_cli_rs")
+	for _, header := range codexHeaders {
+		request.Headers.Set(header[0], header[1])
+	}
+
+	if !isCodexCLIUserAgent(request.Headers.Get("User-Agent")) {
+		request.Headers.Set("User-Agent", UserAgent)
+	}
 
 	if request.Headers.Get("Session_id") == "" {
 		request.Headers.Set("Session_id", uuid.NewString())
@@ -247,7 +281,9 @@ func (e *codexExecutor) Do(ctx context.Context, request *httpclient.Request) (*h
 		request.Headers.Set("Conversation_id", request.Headers.Get("Session_id"))
 	}
 
-	request.Headers.Set("Version", "0.21.0")
+	if !isCodexCLIUserAgent(request.Headers.Get("User-Agent")) || !isCodexCLIVersion(request.Headers.Get("Version")) {
+		request.Headers.Set("Version", codexDefaultVersion)
+	}
 
 	stream, err := e.inner.DoStream(ctx, request)
 	if err != nil {
@@ -291,11 +327,13 @@ func (e *codexExecutor) Do(ctx context.Context, request *httpclient.Request) (*h
 
 func (e *codexExecutor) DoStream(ctx context.Context, request *httpclient.Request) (streams.Stream[*httpclient.StreamEvent], error) {
 	// Ensure Codex-required headers are not overridden by inbound headers.
-	request.Headers.Set("Accept", "text/event-stream")
-	request.Headers.Set("User-Agent", UserAgent)
-	request.Headers.Set("Connection", "Keep-Alive")
-	request.Headers.Set("Openai-Beta", "responses=experimental")
-	request.Headers.Set("Originator", "codex_cli_rs")
+	for _, header := range codexHeaders {
+		request.Headers.Set(header[0], header[1])
+	}
+
+	if !isCodexCLIUserAgent(request.Headers.Get("User-Agent")) {
+		request.Headers.Set("User-Agent", UserAgent)
+	}
 
 	if request.Headers.Get("Session_id") == "" {
 		request.Headers.Set("Session_id", uuid.NewString())
@@ -305,7 +343,50 @@ func (e *codexExecutor) DoStream(ctx context.Context, request *httpclient.Reques
 		request.Headers.Set("Conversation_id", request.Headers.Get("Session_id"))
 	}
 
-	request.Headers.Set("Version", "0.21.0")
+	if !isCodexCLIUserAgent(request.Headers.Get("User-Agent")) || !isCodexCLIVersion(request.Headers.Get("Version")) {
+		request.Headers.Set("Version", codexDefaultVersion)
+	}
 
 	return e.inner.DoStream(ctx, request)
+}
+
+func isCodexCLIUserAgent(value string) bool {
+	return strings.HasPrefix(value, "codex_cli_rs/")
+}
+
+func isCodexCLIVersion(value string) bool {
+	v := strings.TrimSpace(value)
+	if v == "" {
+		return false
+	}
+
+	dot := false
+
+	for i := range len(v) {
+		c := v[i]
+		if c == '.' {
+			dot = true
+			continue
+		}
+
+		if c >= '0' && c <= '9' {
+			continue
+		}
+
+		if c >= 'a' && c <= 'z' {
+			continue
+		}
+
+		if c >= 'A' && c <= 'Z' {
+			continue
+		}
+
+		if c == '-' || c == '+' || c == '_' {
+			continue
+		}
+
+		return false
+	}
+
+	return dot
 }

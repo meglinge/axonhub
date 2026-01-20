@@ -1234,6 +1234,7 @@ type ChannelMutation struct {
 	tags                        *[]string
 	appendtags                  []string
 	default_test_model          *string
+	policies                    *objects.ChannelPolicies
 	settings                    **objects.ChannelSettings
 	ordering_weight             *int
 	addordering_weight          *int
@@ -1869,6 +1870,55 @@ func (m *ChannelMutation) ResetDefaultTestModel() {
 	m.default_test_model = nil
 }
 
+// SetPolicies sets the "policies" field.
+func (m *ChannelMutation) SetPolicies(op objects.ChannelPolicies) {
+	m.policies = &op
+}
+
+// Policies returns the value of the "policies" field in the mutation.
+func (m *ChannelMutation) Policies() (r objects.ChannelPolicies, exists bool) {
+	v := m.policies
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPolicies returns the old "policies" field's value of the Channel entity.
+// If the Channel object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChannelMutation) OldPolicies(ctx context.Context) (v objects.ChannelPolicies, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPolicies is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPolicies requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPolicies: %w", err)
+	}
+	return oldValue.Policies, nil
+}
+
+// ClearPolicies clears the value of the "policies" field.
+func (m *ChannelMutation) ClearPolicies() {
+	m.policies = nil
+	m.clearedFields[channel.FieldPolicies] = struct{}{}
+}
+
+// PoliciesCleared returns if the "policies" field was cleared in this mutation.
+func (m *ChannelMutation) PoliciesCleared() bool {
+	_, ok := m.clearedFields[channel.FieldPolicies]
+	return ok
+}
+
+// ResetPolicies resets all changes to the "policies" field.
+func (m *ChannelMutation) ResetPolicies() {
+	m.policies = nil
+	delete(m.clearedFields, channel.FieldPolicies)
+}
+
 // SetSettings sets the "settings" field.
 func (m *ChannelMutation) SetSettings(os *objects.ChannelSettings) {
 	m.settings = &os
@@ -2415,7 +2465,7 @@ func (m *ChannelMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ChannelMutation) Fields() []string {
-	fields := make([]string, 0, 16)
+	fields := make([]string, 0, 17)
 	if m.created_at != nil {
 		fields = append(fields, channel.FieldCreatedAt)
 	}
@@ -2451,6 +2501,9 @@ func (m *ChannelMutation) Fields() []string {
 	}
 	if m.default_test_model != nil {
 		fields = append(fields, channel.FieldDefaultTestModel)
+	}
+	if m.policies != nil {
+		fields = append(fields, channel.FieldPolicies)
 	}
 	if m.settings != nil {
 		fields = append(fields, channel.FieldSettings)
@@ -2496,6 +2549,8 @@ func (m *ChannelMutation) Field(name string) (ent.Value, bool) {
 		return m.Tags()
 	case channel.FieldDefaultTestModel:
 		return m.DefaultTestModel()
+	case channel.FieldPolicies:
+		return m.Policies()
 	case channel.FieldSettings:
 		return m.Settings()
 	case channel.FieldOrderingWeight:
@@ -2537,6 +2592,8 @@ func (m *ChannelMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldTags(ctx)
 	case channel.FieldDefaultTestModel:
 		return m.OldDefaultTestModel(ctx)
+	case channel.FieldPolicies:
+		return m.OldPolicies(ctx)
 	case channel.FieldSettings:
 		return m.OldSettings(ctx)
 	case channel.FieldOrderingWeight:
@@ -2638,6 +2695,13 @@ func (m *ChannelMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetDefaultTestModel(v)
 		return nil
+	case channel.FieldPolicies:
+		v, ok := value.(objects.ChannelPolicies)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPolicies(v)
+		return nil
 	case channel.FieldSettings:
 		v, ok := value.(*objects.ChannelSettings)
 		if !ok {
@@ -2729,6 +2793,9 @@ func (m *ChannelMutation) ClearedFields() []string {
 	if m.FieldCleared(channel.FieldTags) {
 		fields = append(fields, channel.FieldTags)
 	}
+	if m.FieldCleared(channel.FieldPolicies) {
+		fields = append(fields, channel.FieldPolicies)
+	}
 	if m.FieldCleared(channel.FieldSettings) {
 		fields = append(fields, channel.FieldSettings)
 	}
@@ -2757,6 +2824,9 @@ func (m *ChannelMutation) ClearField(name string) error {
 		return nil
 	case channel.FieldTags:
 		m.ClearTags()
+		return nil
+	case channel.FieldPolicies:
+		m.ClearPolicies()
 		return nil
 	case channel.FieldSettings:
 		m.ClearSettings()
@@ -2810,6 +2880,9 @@ func (m *ChannelMutation) ResetField(name string) error {
 		return nil
 	case channel.FieldDefaultTestModel:
 		m.ResetDefaultTestModel()
+		return nil
+	case channel.FieldPolicies:
+		m.ResetPolicies()
 		return nil
 	case channel.FieldSettings:
 		m.ResetSettings()
@@ -20215,10 +20288,24 @@ func (m *UsageLogMutation) AddedPromptAudioTokens() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearPromptAudioTokens clears the value of the "prompt_audio_tokens" field.
+func (m *UsageLogMutation) ClearPromptAudioTokens() {
+	m.prompt_audio_tokens = nil
+	m.addprompt_audio_tokens = nil
+	m.clearedFields[usagelog.FieldPromptAudioTokens] = struct{}{}
+}
+
+// PromptAudioTokensCleared returns if the "prompt_audio_tokens" field was cleared in this mutation.
+func (m *UsageLogMutation) PromptAudioTokensCleared() bool {
+	_, ok := m.clearedFields[usagelog.FieldPromptAudioTokens]
+	return ok
+}
+
 // ResetPromptAudioTokens resets all changes to the "prompt_audio_tokens" field.
 func (m *UsageLogMutation) ResetPromptAudioTokens() {
 	m.prompt_audio_tokens = nil
 	m.addprompt_audio_tokens = nil
+	delete(m.clearedFields, usagelog.FieldPromptAudioTokens)
 }
 
 // SetPromptCachedTokens sets the "prompt_cached_tokens" field.
@@ -20271,10 +20358,24 @@ func (m *UsageLogMutation) AddedPromptCachedTokens() (r int64, exists bool) {
 	return *v, true
 }
 
+// ClearPromptCachedTokens clears the value of the "prompt_cached_tokens" field.
+func (m *UsageLogMutation) ClearPromptCachedTokens() {
+	m.prompt_cached_tokens = nil
+	m.addprompt_cached_tokens = nil
+	m.clearedFields[usagelog.FieldPromptCachedTokens] = struct{}{}
+}
+
+// PromptCachedTokensCleared returns if the "prompt_cached_tokens" field was cleared in this mutation.
+func (m *UsageLogMutation) PromptCachedTokensCleared() bool {
+	_, ok := m.clearedFields[usagelog.FieldPromptCachedTokens]
+	return ok
+}
+
 // ResetPromptCachedTokens resets all changes to the "prompt_cached_tokens" field.
 func (m *UsageLogMutation) ResetPromptCachedTokens() {
 	m.prompt_cached_tokens = nil
 	m.addprompt_cached_tokens = nil
+	delete(m.clearedFields, usagelog.FieldPromptCachedTokens)
 }
 
 // SetPromptWriteCachedTokens sets the "prompt_write_cached_tokens" field.
@@ -21708,6 +21809,12 @@ func (m *UsageLogMutation) ClearedFields() []string {
 	if m.FieldCleared(usagelog.FieldChannelID) {
 		fields = append(fields, usagelog.FieldChannelID)
 	}
+	if m.FieldCleared(usagelog.FieldPromptAudioTokens) {
+		fields = append(fields, usagelog.FieldPromptAudioTokens)
+	}
+	if m.FieldCleared(usagelog.FieldPromptCachedTokens) {
+		fields = append(fields, usagelog.FieldPromptCachedTokens)
+	}
 	if m.FieldCleared(usagelog.FieldPromptWriteCachedTokens) {
 		fields = append(fields, usagelog.FieldPromptWriteCachedTokens)
 	}
@@ -21757,6 +21864,12 @@ func (m *UsageLogMutation) ClearField(name string) error {
 		return nil
 	case usagelog.FieldChannelID:
 		m.ClearChannelID()
+		return nil
+	case usagelog.FieldPromptAudioTokens:
+		m.ClearPromptAudioTokens()
+		return nil
+	case usagelog.FieldPromptCachedTokens:
+		m.ClearPromptCachedTokens()
 		return nil
 	case usagelog.FieldPromptWriteCachedTokens:
 		m.ClearPromptWriteCachedTokens()

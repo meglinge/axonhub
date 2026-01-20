@@ -216,6 +216,7 @@ type ComplexityRoot struct {
 		ID                      func(childComplexity int) int
 		Name                    func(childComplexity int) int
 		OrderingWeight          func(childComplexity int) int
+		Policies                func(childComplexity int) int
 		Remark                  func(childComplexity int) int
 		Requests                func(childComplexity int, after *entgql.Cursor[int], first *int, before *entgql.Cursor[int], last *int, orderBy *ent.RequestOrder, where *ent.RequestWhereInput) int
 		Settings                func(childComplexity int) int
@@ -355,6 +356,10 @@ type ComplexityRoot struct {
 		UpdatedAt                      func(childComplexity int) int
 	}
 
+	ChannelPolicies struct {
+		Stream func(childComplexity int) int
+	}
+
 	ChannelProbe struct {
 		Channel             func(childComplexity int) int
 		ChannelID           func(childComplexity int) int
@@ -436,8 +441,10 @@ type ComplexityRoot struct {
 	}
 
 	DailyRequestStats struct {
-		Count func(childComplexity int) int
-		Date  func(childComplexity int) int
+		Cost   func(childComplexity int) int
+		Count  func(childComplexity int) int
+		Date   func(childComplexity int) int
+		Tokens func(childComplexity int) int
 	}
 
 	DashboardOverview struct {
@@ -634,7 +641,7 @@ type ComplexityRoot struct {
 	Mutation struct {
 		AddUserToProject                     func(childComplexity int, input AddUserToProjectInput) int
 		ApplyChannelOverrideTemplate         func(childComplexity int, input ApplyChannelOverrideTemplateInput) int
-		Backup                               func(childComplexity int, input BackupOptionsInput) int
+		Backup                               func(childComplexity int, input biz.BackupOptions) int
 		BulkArchiveAPIKeys                   func(childComplexity int, ids []*objects.GUID) int
 		BulkArchiveChannels                  func(childComplexity int, ids []*objects.GUID) int
 		BulkArchiveModels                    func(childComplexity int, ids []*objects.GUID) int
@@ -671,7 +678,7 @@ type ComplexityRoot struct {
 		DeletePrompt                         func(childComplexity int, id objects.GUID) int
 		DeleteRole                           func(childComplexity int, id objects.GUID) int
 		RemoveUserFromProject                func(childComplexity int, input RemoveUserFromProjectInput) int
-		Restore                              func(childComplexity int, file graphql.Upload, input RestoreOptionsInput) int
+		Restore                              func(childComplexity int, file graphql.Upload, input biz.RestoreOptions) int
 		SaveChannelModelPrices               func(childComplexity int, channelID objects.GUID, input []*biz.SaveChannelModelPriceInput) int
 		TestChannel                          func(childComplexity int, input TestChannelInput) int
 		UpdateAPIKey                         func(childComplexity int, id objects.GUID, input ent.UpdateAPIKeyInput) int
@@ -1147,6 +1154,7 @@ type ComplexityRoot struct {
 
 	SystemGeneralSettings struct {
 		CurrencyCode func(childComplexity int) int
+		Timezone     func(childComplexity int) int
 	}
 
 	SystemModelSettingOnboarding struct {
@@ -1421,6 +1429,8 @@ type APIKeyResolver interface {
 type ChannelResolver interface {
 	ID(ctx context.Context, obj *ent.Channel) (*objects.GUID, error)
 
+	Policies(ctx context.Context, obj *ent.Channel) (*objects.ChannelPolicies, error)
+
 	AllModelEntries(ctx context.Context, obj *ent.Channel) ([]*biz.ChannelModelEntry, error)
 	Credentials(ctx context.Context, obj *ent.Channel) (*objects.ChannelCredentials, error)
 }
@@ -1517,8 +1527,8 @@ type MutationResolver interface {
 	BulkDisableModels(ctx context.Context, ids []*objects.GUID) (bool, error)
 	BulkEnableModels(ctx context.Context, ids []*objects.GUID) (bool, error)
 	BulkDeleteModels(ctx context.Context, ids []*objects.GUID) (bool, error)
-	Backup(ctx context.Context, input BackupOptionsInput) (*BackupPayload, error)
-	Restore(ctx context.Context, file graphql.Upload, input RestoreOptionsInput) (*RestorePayload, error)
+	Backup(ctx context.Context, input biz.BackupOptions) (*BackupPayload, error)
+	Restore(ctx context.Context, file graphql.Upload, input biz.RestoreOptions) (*RestorePayload, error)
 	CreatePrompt(ctx context.Context, input ent.CreatePromptInput) (*ent.Prompt, error)
 	UpdatePrompt(ctx context.Context, id objects.GUID, input ent.UpdatePromptInput) (*ent.Prompt, error)
 	DeletePrompt(ctx context.Context, id objects.GUID) (bool, error)
@@ -2168,6 +2178,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Channel.OrderingWeight(childComplexity), true
+	case "Channel.policies":
+		if e.complexity.Channel.Policies == nil {
+			break
+		}
+
+		return e.complexity.Channel.Policies(childComplexity), true
 	case "Channel.remark":
 		if e.complexity.Channel.Remark == nil {
 			break
@@ -2746,6 +2762,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ChannelPerformance.UpdatedAt(childComplexity), true
 
+	case "ChannelPolicies.stream":
+		if e.complexity.ChannelPolicies.Stream == nil {
+			break
+		}
+
+		return e.complexity.ChannelPolicies.Stream(childComplexity), true
+
 	case "ChannelProbe.channel":
 		if e.complexity.ChannelProbe.Channel == nil {
 			break
@@ -3022,6 +3045,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CostItem.TierBreakdown(childComplexity), true
 
+	case "DailyRequestStats.cost":
+		if e.complexity.DailyRequestStats.Cost == nil {
+			break
+		}
+
+		return e.complexity.DailyRequestStats.Cost(childComplexity), true
 	case "DailyRequestStats.count":
 		if e.complexity.DailyRequestStats.Count == nil {
 			break
@@ -3034,6 +3063,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DailyRequestStats.Date(childComplexity), true
+	case "DailyRequestStats.tokens":
+		if e.complexity.DailyRequestStats.Tokens == nil {
+			break
+		}
+
+		return e.complexity.DailyRequestStats.Tokens(childComplexity), true
 
 	case "DashboardOverview.averageResponseTime":
 		if e.complexity.DashboardOverview.AverageResponseTime == nil {
@@ -3730,7 +3765,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.Backup(childComplexity, args["input"].(BackupOptionsInput)), true
+		return e.complexity.Mutation.Backup(childComplexity, args["input"].(biz.BackupOptions)), true
 	case "Mutation.bulkArchiveAPIKeys":
 		if e.complexity.Mutation.BulkArchiveAPIKeys == nil {
 			break
@@ -4137,7 +4172,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.Restore(childComplexity, args["file"].(graphql.Upload), args["input"].(RestoreOptionsInput)), true
+		return e.complexity.Mutation.Restore(childComplexity, args["file"].(graphql.Upload), args["input"].(biz.RestoreOptions)), true
 	case "Mutation.saveChannelModelPrices":
 		if e.complexity.Mutation.SaveChannelModelPrices == nil {
 			break
@@ -6351,6 +6386,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SystemGeneralSettings.CurrencyCode(childComplexity), true
+	case "SystemGeneralSettings.timezone":
+		if e.complexity.SystemGeneralSettings.Timezone == nil {
+			break
+		}
+
+		return e.complexity.SystemGeneralSettings.Timezone(childComplexity), true
 
 	case "SystemModelSettingOnboarding.completedAt":
 		if e.complexity.SystemModelSettingOnboarding.CompletedAt == nil {
@@ -7481,6 +7522,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputChannelOverrideTemplateWhereInput,
 		ec.unmarshalInputChannelPerformanceOrder,
 		ec.unmarshalInputChannelPerformanceWhereInput,
+		ec.unmarshalInputChannelPoliciesInput,
 		ec.unmarshalInputChannelProbeWhereInput,
 		ec.unmarshalInputChannelRegexAssociationInput,
 		ec.unmarshalInputChannelSettingsInput,
@@ -7969,7 +8011,7 @@ func (ec *executionContext) field_Mutation_applyChannelOverrideTemplate_args(ctx
 func (ec *executionContext) field_Mutation_backup_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNBackupOptionsInput2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋgqlᚐBackupOptionsInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNBackupOptionsInput2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋbizᚐBackupOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -8381,7 +8423,7 @@ func (ec *executionContext) field_Mutation_restore_args(ctx context.Context, raw
 		return nil, err
 	}
 	args["file"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRestoreOptionsInput2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋgqlᚐRestoreOptionsInput)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRestoreOptionsInput2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋbizᚐRestoreOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -11548,6 +11590,8 @@ func (ec *executionContext) fieldContext_ApplyChannelOverrideTemplatePayload_cha
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -12008,6 +12052,8 @@ func (ec *executionContext) fieldContext_BulkImportChannelsResult_channels(_ con
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -12143,6 +12189,8 @@ func (ec *executionContext) fieldContext_BulkUpdateChannelOrderingResult_channel
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -12488,6 +12536,39 @@ func (ec *executionContext) fieldContext_Channel_defaultTestModel(_ context.Cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Channel_policies(ctx context.Context, field graphql.CollectedField, obj *ent.Channel) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Channel_policies,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Channel().Policies(ctx, obj)
+		},
+		nil,
+		ec.marshalOChannelPolicies2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐChannelPolicies,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Channel_policies(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Channel",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "stream":
+				return ec.fieldContext_ChannelPolicies_stream(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ChannelPolicies", field.Name)
 		},
 	}
 	return fc, nil
@@ -13316,6 +13397,8 @@ func (ec *executionContext) fieldContext_ChannelEdge_node(_ context.Context, fie
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -13774,6 +13857,8 @@ func (ec *executionContext) fieldContext_ChannelModelPrice_channel(_ context.Con
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -15799,6 +15884,8 @@ func (ec *executionContext) fieldContext_ChannelPerformance_channel(_ context.Co
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -15825,6 +15912,35 @@ func (ec *executionContext) fieldContext_ChannelPerformance_channel(_ context.Co
 				return ec.fieldContext_Channel_credentials(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Channel", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ChannelPolicies_stream(ctx context.Context, field graphql.CollectedField, obj *objects.ChannelPolicies) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ChannelPolicies_stream,
+		func(ctx context.Context) (any, error) {
+			return obj.Stream, nil
+		},
+		nil,
+		ec.marshalOCapabilityPolicy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐCapabilityPolicy,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ChannelPolicies_stream(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ChannelPolicies",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CapabilityPolicy does not have child fields")
 		},
 	}
 	return fc, nil
@@ -16021,6 +16137,8 @@ func (ec *executionContext) fieldContext_ChannelProbe_channel(_ context.Context,
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -17253,6 +17371,64 @@ func (ec *executionContext) fieldContext_DailyRequestStats_count(_ context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DailyRequestStats_tokens(ctx context.Context, field graphql.CollectedField, obj *DailyRequestStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DailyRequestStats_tokens,
+		func(ctx context.Context) (any, error) {
+			return obj.Tokens, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DailyRequestStats_tokens(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DailyRequestStats",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DailyRequestStats_cost(ctx context.Context, field graphql.CollectedField, obj *DailyRequestStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DailyRequestStats_cost,
+		func(ctx context.Context) (any, error) {
+			return obj.Cost, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DailyRequestStats_cost(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DailyRequestStats",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
 		},
 	}
 	return fc, nil
@@ -19982,6 +20158,8 @@ func (ec *executionContext) fieldContext_ModelChannelConnection_channel(_ contex
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -20715,6 +20893,8 @@ func (ec *executionContext) fieldContext_Mutation_createChannel(ctx context.Cont
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -20804,6 +20984,8 @@ func (ec *executionContext) fieldContext_Mutation_bulkCreateChannels(ctx context
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -20893,6 +21075,8 @@ func (ec *executionContext) fieldContext_Mutation_updateChannel(ctx context.Cont
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -20982,6 +21166,8 @@ func (ec *executionContext) fieldContext_Mutation_updateChannelStatus(ctx contex
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -23869,7 +24055,7 @@ func (ec *executionContext) _Mutation_backup(ctx context.Context, field graphql.
 		ec.fieldContext_Mutation_backup,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().Backup(ctx, fc.Args["input"].(BackupOptionsInput))
+			return ec.resolvers.Mutation().Backup(ctx, fc.Args["input"].(biz.BackupOptions))
 		},
 		nil,
 		ec.marshalNBackupPayload2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋgqlᚐBackupPayload,
@@ -23918,7 +24104,7 @@ func (ec *executionContext) _Mutation_restore(ctx context.Context, field graphql
 		ec.fieldContext_Mutation_restore,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().Restore(ctx, fc.Args["file"].(graphql.Upload), fc.Args["input"].(RestoreOptionsInput))
+			return ec.resolvers.Mutation().Restore(ctx, fc.Args["file"].(graphql.Upload), fc.Args["input"].(biz.RestoreOptions))
 		},
 		nil,
 		ec.marshalNRestorePayload2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋgqlᚐRestorePayload,
@@ -27888,6 +28074,10 @@ func (ec *executionContext) fieldContext_Query_dailyRequestStats(_ context.Conte
 				return ec.fieldContext_DailyRequestStats_date(ctx, field)
 			case "count":
 				return ec.fieldContext_DailyRequestStats_count(ctx, field)
+			case "tokens":
+				return ec.fieldContext_DailyRequestStats_tokens(ctx, field)
+			case "cost":
+				return ec.fieldContext_DailyRequestStats_cost(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DailyRequestStats", field.Name)
 		},
@@ -28583,6 +28773,8 @@ func (ec *executionContext) fieldContext_Query_systemGeneralSettings(_ context.C
 			switch field.Name {
 			case "currencyCode":
 				return ec.fieldContext_SystemGeneralSettings_currencyCode(ctx, field)
+			case "timezone":
+				return ec.fieldContext_SystemGeneralSettings_timezone(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SystemGeneralSettings", field.Name)
 		},
@@ -29925,6 +30117,8 @@ func (ec *executionContext) fieldContext_Request_channel(_ context.Context, fiel
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -30908,6 +31102,8 @@ func (ec *executionContext) fieldContext_RequestExecution_channel(_ context.Cont
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -34405,6 +34601,35 @@ func (ec *executionContext) fieldContext_SystemGeneralSettings_currencyCode(_ co
 	return fc, nil
 }
 
+func (ec *executionContext) _SystemGeneralSettings_timezone(ctx context.Context, field graphql.CollectedField, obj *biz.SystemGeneralSettings) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SystemGeneralSettings_timezone,
+		func(ctx context.Context) (any, error) {
+			return obj.Timezone, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SystemGeneralSettings_timezone(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SystemGeneralSettings",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SystemModelSettingOnboarding_onboarded(ctx context.Context, field graphql.CollectedField, obj *SystemModelSettingOnboarding) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -36888,6 +37113,8 @@ func (ec *executionContext) fieldContext_UnassociatedChannel_channel(_ context.C
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -37277,9 +37504,9 @@ func (ec *executionContext) _UsageLog_promptAudioTokens(ctx context.Context, fie
 			return obj.PromptAudioTokens, nil
 		},
 		nil,
-		ec.marshalNInt2int64,
+		ec.marshalOInt2int64,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -37306,9 +37533,9 @@ func (ec *executionContext) _UsageLog_promptCachedTokens(ctx context.Context, fi
 			return obj.PromptCachedTokens, nil
 		},
 		nil,
-		ec.marshalNInt2int64,
+		ec.marshalOInt2int64,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -37877,6 +38104,8 @@ func (ec *executionContext) fieldContext_UsageLog_channel(_ context.Context, fie
 				return ec.fieldContext_Channel_tags(ctx, field)
 			case "defaultTestModel":
 				return ec.fieldContext_Channel_defaultTestModel(ctx, field)
+			case "policies":
+				return ec.fieldContext_Channel_policies(ctx, field)
 			case "settings":
 				return ec.fieldContext_Channel_settings(ctx, field)
 			case "orderingWeight":
@@ -42747,8 +42976,8 @@ func (ec *executionContext) unmarshalInputAutoDisableChannelStatusInput(ctx cont
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputBackupOptionsInput(ctx context.Context, obj any) (BackupOptionsInput, error) {
-	var it BackupOptionsInput
+func (ec *executionContext) unmarshalInputBackupOptionsInput(ctx context.Context, obj any) (biz.BackupOptions, error) {
+	var it biz.BackupOptions
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -46499,6 +46728,33 @@ func (ec *executionContext) unmarshalInputChannelPerformanceWhereInput(ctx conte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputChannelPoliciesInput(ctx context.Context, obj any) (objects.ChannelPolicies, error) {
+	var it objects.ChannelPolicies
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"stream"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "stream":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stream"))
+			data, err := ec.unmarshalOCapabilityPolicy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐCapabilityPolicy(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Stream = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputChannelProbeWhereInput(ctx context.Context, obj any) (ent.ChannelProbeWhereInput, error) {
 	var it ent.ChannelProbeWhereInput
 	asMap := map[string]any{}
@@ -48216,7 +48472,7 @@ func (ec *executionContext) unmarshalInputCreateChannelInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"type", "baseURL", "name", "credentials", "supportedModels", "autoSyncSupportedModels", "tags", "defaultTestModel", "settings", "orderingWeight", "remark"}
+	fieldsInOrder := [...]string{"type", "baseURL", "name", "credentials", "supportedModels", "autoSyncSupportedModels", "tags", "defaultTestModel", "policies", "settings", "orderingWeight", "remark"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -48279,6 +48535,13 @@ func (ec *executionContext) unmarshalInputCreateChannelInput(ctx context.Context
 				return it, err
 			}
 			it.DefaultTestModel = data
+		case "policies":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("policies"))
+			data, err := ec.unmarshalOChannelPoliciesInput2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐChannelPolicies(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Policies = data
 		case "settings":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("settings"))
 			data, err := ec.unmarshalOChannelSettingsInput2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐChannelSettings(ctx, v)
@@ -55844,8 +56107,8 @@ func (ec *executionContext) unmarshalInputRequestWhereInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputRestoreOptionsInput(ctx context.Context, obj any) (RestoreOptionsInput, error) {
-	var it RestoreOptionsInput
+func (ec *executionContext) unmarshalInputRestoreOptionsInput(ctx context.Context, obj any) (biz.RestoreOptions, error) {
+	var it biz.RestoreOptions
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -55892,21 +56155,21 @@ func (ec *executionContext) unmarshalInputRestoreOptionsInput(ctx context.Contex
 			it.IncludeAPIKeys = data
 		case "channelConflictStrategy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("channelConflictStrategy"))
-			data, err := ec.unmarshalNBackupConflictStrategy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋgqlᚐBackupConflictStrategy(ctx, v)
+			data, err := ec.unmarshalNBackupConflictStrategy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋbizᚐConflictStrategy(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ChannelConflictStrategy = data
 		case "modelConflictStrategy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelConflictStrategy"))
-			data, err := ec.unmarshalNBackupConflictStrategy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋgqlᚐBackupConflictStrategy(ctx, v)
+			data, err := ec.unmarshalNBackupConflictStrategy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋbizᚐConflictStrategy(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.ModelConflictStrategy = data
 		case "apiKeyConflictStrategy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiKeyConflictStrategy"))
-			data, err := ec.unmarshalNBackupConflictStrategy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋgqlᚐBackupConflictStrategy(ctx, v)
+			data, err := ec.unmarshalNBackupConflictStrategy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋbizᚐConflictStrategy(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -58255,7 +58518,7 @@ func (ec *executionContext) unmarshalInputUpdateChannelInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"baseURL", "clearBaseURL", "name", "status", "credentials", "supportedModels", "appendSupportedModels", "autoSyncSupportedModels", "tags", "appendTags", "clearTags", "defaultTestModel", "settings", "clearSettings", "orderingWeight", "errorMessage", "clearErrorMessage", "remark", "clearRemark"}
+	fieldsInOrder := [...]string{"baseURL", "clearBaseURL", "name", "status", "credentials", "supportedModels", "appendSupportedModels", "autoSyncSupportedModels", "tags", "appendTags", "clearTags", "defaultTestModel", "policies", "clearPolicies", "settings", "clearSettings", "orderingWeight", "errorMessage", "clearErrorMessage", "remark", "clearRemark"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -58346,6 +58609,20 @@ func (ec *executionContext) unmarshalInputUpdateChannelInput(ctx context.Context
 				return it, err
 			}
 			it.DefaultTestModel = data
+		case "policies":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("policies"))
+			data, err := ec.unmarshalOChannelPoliciesInput2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐChannelPolicies(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Policies = data
+		case "clearPolicies":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearPolicies"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearPolicies = data
 		case "settings":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("settings"))
 			data, err := ec.unmarshalOChannelSettingsInput2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐChannelSettings(ctx, v)
@@ -58586,20 +58863,13 @@ func (ec *executionContext) unmarshalInputUpdateMeInput(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"email", "firstName", "lastName", "preferLanguage", "avatar"}
+	fieldsInOrder := [...]string{"firstName", "lastName", "preferLanguage", "avatar"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "email":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Email = data
 		case "firstName":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("firstName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -59322,7 +59592,7 @@ func (ec *executionContext) unmarshalInputUpdateSystemGeneralSettingsInput(ctx c
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"currencyCode"}
+	fieldsInOrder := [...]string{"currencyCode", "timezone"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -59336,6 +59606,13 @@ func (ec *executionContext) unmarshalInputUpdateSystemGeneralSettingsInput(ctx c
 				return it, err
 			}
 			it.CurrencyCode = data
+		case "timezone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timezone"))
+			data, err := ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Timezone = data
 		}
 	}
 
@@ -59471,7 +59748,7 @@ func (ec *executionContext) unmarshalInputUpdateUsageLogInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"promptTokens", "completionTokens", "totalTokens", "promptAudioTokens", "promptCachedTokens", "promptWriteCachedTokens", "clearPromptWriteCachedTokens", "promptWriteCachedTokens5m", "clearPromptWriteCachedTokens5m", "promptWriteCachedTokens1h", "clearPromptWriteCachedTokens1h", "completionAudioTokens", "clearCompletionAudioTokens", "completionReasoningTokens", "clearCompletionReasoningTokens", "completionAcceptedPredictionTokens", "clearCompletionAcceptedPredictionTokens", "completionRejectedPredictionTokens", "clearCompletionRejectedPredictionTokens", "totalCost", "clearTotalCost", "costItems", "appendCostItems", "clearCostItems", "costPriceReferenceID", "clearCostPriceReferenceID", "channelID", "clearChannel"}
+	fieldsInOrder := [...]string{"promptTokens", "completionTokens", "totalTokens", "promptAudioTokens", "clearPromptAudioTokens", "promptCachedTokens", "clearPromptCachedTokens", "promptWriteCachedTokens", "clearPromptWriteCachedTokens", "promptWriteCachedTokens5m", "clearPromptWriteCachedTokens5m", "promptWriteCachedTokens1h", "clearPromptWriteCachedTokens1h", "completionAudioTokens", "clearCompletionAudioTokens", "completionReasoningTokens", "clearCompletionReasoningTokens", "completionAcceptedPredictionTokens", "clearCompletionAcceptedPredictionTokens", "completionRejectedPredictionTokens", "clearCompletionRejectedPredictionTokens", "totalCost", "clearTotalCost", "costItems", "appendCostItems", "clearCostItems", "costPriceReferenceID", "clearCostPriceReferenceID", "channelID", "clearChannel"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -59506,6 +59783,13 @@ func (ec *executionContext) unmarshalInputUpdateUsageLogInput(ctx context.Contex
 				return it, err
 			}
 			it.PromptAudioTokens = data
+		case "clearPromptAudioTokens":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearPromptAudioTokens"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearPromptAudioTokens = data
 		case "promptCachedTokens":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("promptCachedTokens"))
 			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
@@ -59513,6 +59797,13 @@ func (ec *executionContext) unmarshalInputUpdateUsageLogInput(ctx context.Contex
 				return it, err
 			}
 			it.PromptCachedTokens = data
+		case "clearPromptCachedTokens":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearPromptCachedTokens"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearPromptCachedTokens = data
 		case "promptWriteCachedTokens":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("promptWriteCachedTokens"))
 			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
@@ -59891,7 +60182,7 @@ func (ec *executionContext) unmarshalInputUsageLogWhereInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "requestID", "requestIDNEQ", "requestIDIn", "requestIDNotIn", "apiKeyID", "apiKeyIDNEQ", "apiKeyIDIn", "apiKeyIDNotIn", "apiKeyIDGT", "apiKeyIDGTE", "apiKeyIDLT", "apiKeyIDLTE", "apiKeyIDIsNil", "apiKeyIDNotNil", "projectID", "projectIDNEQ", "projectIDIn", "projectIDNotIn", "channelID", "channelIDNEQ", "channelIDIn", "channelIDNotIn", "channelIDIsNil", "channelIDNotNil", "modelID", "modelIDNEQ", "modelIDIn", "modelIDNotIn", "modelIDGT", "modelIDGTE", "modelIDLT", "modelIDLTE", "modelIDContains", "modelIDHasPrefix", "modelIDHasSuffix", "modelIDEqualFold", "modelIDContainsFold", "promptTokens", "promptTokensNEQ", "promptTokensIn", "promptTokensNotIn", "promptTokensGT", "promptTokensGTE", "promptTokensLT", "promptTokensLTE", "completionTokens", "completionTokensNEQ", "completionTokensIn", "completionTokensNotIn", "completionTokensGT", "completionTokensGTE", "completionTokensLT", "completionTokensLTE", "totalTokens", "totalTokensNEQ", "totalTokensIn", "totalTokensNotIn", "totalTokensGT", "totalTokensGTE", "totalTokensLT", "totalTokensLTE", "promptAudioTokens", "promptAudioTokensNEQ", "promptAudioTokensIn", "promptAudioTokensNotIn", "promptAudioTokensGT", "promptAudioTokensGTE", "promptAudioTokensLT", "promptAudioTokensLTE", "promptCachedTokens", "promptCachedTokensNEQ", "promptCachedTokensIn", "promptCachedTokensNotIn", "promptCachedTokensGT", "promptCachedTokensGTE", "promptCachedTokensLT", "promptCachedTokensLTE", "promptWriteCachedTokens", "promptWriteCachedTokensNEQ", "promptWriteCachedTokensIn", "promptWriteCachedTokensNotIn", "promptWriteCachedTokensGT", "promptWriteCachedTokensGTE", "promptWriteCachedTokensLT", "promptWriteCachedTokensLTE", "promptWriteCachedTokensIsNil", "promptWriteCachedTokensNotNil", "promptWriteCachedTokens5m", "promptWriteCachedTokens5mNEQ", "promptWriteCachedTokens5mIn", "promptWriteCachedTokens5mNotIn", "promptWriteCachedTokens5mGT", "promptWriteCachedTokens5mGTE", "promptWriteCachedTokens5mLT", "promptWriteCachedTokens5mLTE", "promptWriteCachedTokens5mIsNil", "promptWriteCachedTokens5mNotNil", "promptWriteCachedTokens1h", "promptWriteCachedTokens1hNEQ", "promptWriteCachedTokens1hIn", "promptWriteCachedTokens1hNotIn", "promptWriteCachedTokens1hGT", "promptWriteCachedTokens1hGTE", "promptWriteCachedTokens1hLT", "promptWriteCachedTokens1hLTE", "promptWriteCachedTokens1hIsNil", "promptWriteCachedTokens1hNotNil", "completionAudioTokens", "completionAudioTokensNEQ", "completionAudioTokensIn", "completionAudioTokensNotIn", "completionAudioTokensGT", "completionAudioTokensGTE", "completionAudioTokensLT", "completionAudioTokensLTE", "completionAudioTokensIsNil", "completionAudioTokensNotNil", "completionReasoningTokens", "completionReasoningTokensNEQ", "completionReasoningTokensIn", "completionReasoningTokensNotIn", "completionReasoningTokensGT", "completionReasoningTokensGTE", "completionReasoningTokensLT", "completionReasoningTokensLTE", "completionReasoningTokensIsNil", "completionReasoningTokensNotNil", "completionAcceptedPredictionTokens", "completionAcceptedPredictionTokensNEQ", "completionAcceptedPredictionTokensIn", "completionAcceptedPredictionTokensNotIn", "completionAcceptedPredictionTokensGT", "completionAcceptedPredictionTokensGTE", "completionAcceptedPredictionTokensLT", "completionAcceptedPredictionTokensLTE", "completionAcceptedPredictionTokensIsNil", "completionAcceptedPredictionTokensNotNil", "completionRejectedPredictionTokens", "completionRejectedPredictionTokensNEQ", "completionRejectedPredictionTokensIn", "completionRejectedPredictionTokensNotIn", "completionRejectedPredictionTokensGT", "completionRejectedPredictionTokensGTE", "completionRejectedPredictionTokensLT", "completionRejectedPredictionTokensLTE", "completionRejectedPredictionTokensIsNil", "completionRejectedPredictionTokensNotNil", "source", "sourceNEQ", "sourceIn", "sourceNotIn", "format", "formatNEQ", "formatIn", "formatNotIn", "formatGT", "formatGTE", "formatLT", "formatLTE", "formatContains", "formatHasPrefix", "formatHasSuffix", "formatEqualFold", "formatContainsFold", "totalCost", "totalCostNEQ", "totalCostIn", "totalCostNotIn", "totalCostGT", "totalCostGTE", "totalCostLT", "totalCostLTE", "totalCostIsNil", "totalCostNotNil", "costPriceReferenceID", "costPriceReferenceIDNEQ", "costPriceReferenceIDIn", "costPriceReferenceIDNotIn", "costPriceReferenceIDGT", "costPriceReferenceIDGTE", "costPriceReferenceIDLT", "costPriceReferenceIDLTE", "costPriceReferenceIDContains", "costPriceReferenceIDHasPrefix", "costPriceReferenceIDHasSuffix", "costPriceReferenceIDIsNil", "costPriceReferenceIDNotNil", "costPriceReferenceIDEqualFold", "costPriceReferenceIDContainsFold", "hasRequest", "hasRequestWith", "hasProject", "hasProjectWith", "hasChannel", "hasChannelWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "requestID", "requestIDNEQ", "requestIDIn", "requestIDNotIn", "apiKeyID", "apiKeyIDNEQ", "apiKeyIDIn", "apiKeyIDNotIn", "apiKeyIDGT", "apiKeyIDGTE", "apiKeyIDLT", "apiKeyIDLTE", "apiKeyIDIsNil", "apiKeyIDNotNil", "projectID", "projectIDNEQ", "projectIDIn", "projectIDNotIn", "channelID", "channelIDNEQ", "channelIDIn", "channelIDNotIn", "channelIDIsNil", "channelIDNotNil", "modelID", "modelIDNEQ", "modelIDIn", "modelIDNotIn", "modelIDGT", "modelIDGTE", "modelIDLT", "modelIDLTE", "modelIDContains", "modelIDHasPrefix", "modelIDHasSuffix", "modelIDEqualFold", "modelIDContainsFold", "promptTokens", "promptTokensNEQ", "promptTokensIn", "promptTokensNotIn", "promptTokensGT", "promptTokensGTE", "promptTokensLT", "promptTokensLTE", "completionTokens", "completionTokensNEQ", "completionTokensIn", "completionTokensNotIn", "completionTokensGT", "completionTokensGTE", "completionTokensLT", "completionTokensLTE", "totalTokens", "totalTokensNEQ", "totalTokensIn", "totalTokensNotIn", "totalTokensGT", "totalTokensGTE", "totalTokensLT", "totalTokensLTE", "promptAudioTokens", "promptAudioTokensNEQ", "promptAudioTokensIn", "promptAudioTokensNotIn", "promptAudioTokensGT", "promptAudioTokensGTE", "promptAudioTokensLT", "promptAudioTokensLTE", "promptAudioTokensIsNil", "promptAudioTokensNotNil", "promptCachedTokens", "promptCachedTokensNEQ", "promptCachedTokensIn", "promptCachedTokensNotIn", "promptCachedTokensGT", "promptCachedTokensGTE", "promptCachedTokensLT", "promptCachedTokensLTE", "promptCachedTokensIsNil", "promptCachedTokensNotNil", "promptWriteCachedTokens", "promptWriteCachedTokensNEQ", "promptWriteCachedTokensIn", "promptWriteCachedTokensNotIn", "promptWriteCachedTokensGT", "promptWriteCachedTokensGTE", "promptWriteCachedTokensLT", "promptWriteCachedTokensLTE", "promptWriteCachedTokensIsNil", "promptWriteCachedTokensNotNil", "promptWriteCachedTokens5m", "promptWriteCachedTokens5mNEQ", "promptWriteCachedTokens5mIn", "promptWriteCachedTokens5mNotIn", "promptWriteCachedTokens5mGT", "promptWriteCachedTokens5mGTE", "promptWriteCachedTokens5mLT", "promptWriteCachedTokens5mLTE", "promptWriteCachedTokens5mIsNil", "promptWriteCachedTokens5mNotNil", "promptWriteCachedTokens1h", "promptWriteCachedTokens1hNEQ", "promptWriteCachedTokens1hIn", "promptWriteCachedTokens1hNotIn", "promptWriteCachedTokens1hGT", "promptWriteCachedTokens1hGTE", "promptWriteCachedTokens1hLT", "promptWriteCachedTokens1hLTE", "promptWriteCachedTokens1hIsNil", "promptWriteCachedTokens1hNotNil", "completionAudioTokens", "completionAudioTokensNEQ", "completionAudioTokensIn", "completionAudioTokensNotIn", "completionAudioTokensGT", "completionAudioTokensGTE", "completionAudioTokensLT", "completionAudioTokensLTE", "completionAudioTokensIsNil", "completionAudioTokensNotNil", "completionReasoningTokens", "completionReasoningTokensNEQ", "completionReasoningTokensIn", "completionReasoningTokensNotIn", "completionReasoningTokensGT", "completionReasoningTokensGTE", "completionReasoningTokensLT", "completionReasoningTokensLTE", "completionReasoningTokensIsNil", "completionReasoningTokensNotNil", "completionAcceptedPredictionTokens", "completionAcceptedPredictionTokensNEQ", "completionAcceptedPredictionTokensIn", "completionAcceptedPredictionTokensNotIn", "completionAcceptedPredictionTokensGT", "completionAcceptedPredictionTokensGTE", "completionAcceptedPredictionTokensLT", "completionAcceptedPredictionTokensLTE", "completionAcceptedPredictionTokensIsNil", "completionAcceptedPredictionTokensNotNil", "completionRejectedPredictionTokens", "completionRejectedPredictionTokensNEQ", "completionRejectedPredictionTokensIn", "completionRejectedPredictionTokensNotIn", "completionRejectedPredictionTokensGT", "completionRejectedPredictionTokensGTE", "completionRejectedPredictionTokensLT", "completionRejectedPredictionTokensLTE", "completionRejectedPredictionTokensIsNil", "completionRejectedPredictionTokensNotNil", "source", "sourceNEQ", "sourceIn", "sourceNotIn", "format", "formatNEQ", "formatIn", "formatNotIn", "formatGT", "formatGTE", "formatLT", "formatLTE", "formatContains", "formatHasPrefix", "formatHasSuffix", "formatEqualFold", "formatContainsFold", "totalCost", "totalCostNEQ", "totalCostIn", "totalCostNotIn", "totalCostGT", "totalCostGTE", "totalCostLT", "totalCostLTE", "totalCostIsNil", "totalCostNotNil", "costPriceReferenceID", "costPriceReferenceIDNEQ", "costPriceReferenceIDIn", "costPriceReferenceIDNotIn", "costPriceReferenceIDGT", "costPriceReferenceIDGTE", "costPriceReferenceIDLT", "costPriceReferenceIDLTE", "costPriceReferenceIDContains", "costPriceReferenceIDHasPrefix", "costPriceReferenceIDHasSuffix", "costPriceReferenceIDIsNil", "costPriceReferenceIDNotNil", "costPriceReferenceIDEqualFold", "costPriceReferenceIDContainsFold", "hasRequest", "hasRequestWith", "hasProject", "hasProjectWith", "hasChannel", "hasChannelWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -60650,6 +60941,20 @@ func (ec *executionContext) unmarshalInputUsageLogWhereInput(ctx context.Context
 				return it, err
 			}
 			it.PromptAudioTokensLTE = data
+		case "promptAudioTokensIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("promptAudioTokensIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PromptAudioTokensIsNil = data
+		case "promptAudioTokensNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("promptAudioTokensNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PromptAudioTokensNotNil = data
 		case "promptCachedTokens":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("promptCachedTokens"))
 			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
@@ -60706,6 +61011,20 @@ func (ec *executionContext) unmarshalInputUsageLogWhereInput(ctx context.Context
 				return it, err
 			}
 			it.PromptCachedTokensLTE = data
+		case "promptCachedTokensIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("promptCachedTokensIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PromptCachedTokensIsNil = data
+		case "promptCachedTokensNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("promptCachedTokensNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PromptCachedTokensNotNil = data
 		case "promptWriteCachedTokens":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("promptWriteCachedTokens"))
 			data, err := ec.unmarshalOInt2ᚖint64(ctx, v)
@@ -64229,6 +64548,39 @@ func (ec *executionContext) _Channel(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "policies":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Channel_policies(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "settings":
 			out.Values[i] = ec._Channel_settings(ctx, field, obj)
 		case "orderingWeight":
@@ -65816,6 +66168,42 @@ func (ec *executionContext) _ChannelPerformance(ctx context.Context, sel ast.Sel
 	return out
 }
 
+var channelPoliciesImplementors = []string{"ChannelPolicies"}
+
+func (ec *executionContext) _ChannelPolicies(ctx context.Context, sel ast.SelectionSet, obj *objects.ChannelPolicies) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, channelPoliciesImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ChannelPolicies")
+		case "stream":
+			out.Values[i] = ec._ChannelPolicies_stream(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var channelProbeImplementors = []string{"ChannelProbe", "Node"}
 
 func (ec *executionContext) _ChannelProbe(ctx context.Context, sel ast.SelectionSet, obj *ent.ChannelProbe) graphql.Marshaler {
@@ -66556,6 +66944,16 @@ func (ec *executionContext) _DailyRequestStats(ctx context.Context, sel ast.Sele
 			}
 		case "count":
 			out.Values[i] = ec._DailyRequestStats_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tokens":
+			out.Values[i] = ec._DailyRequestStats_tokens(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cost":
+			out.Values[i] = ec._DailyRequestStats_cost(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -73932,6 +74330,11 @@ func (ec *executionContext) _SystemGeneralSettings(ctx context.Context, sel ast.
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "timezone":
+			out.Values[i] = ec._SystemGeneralSettings_timezone(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -75614,14 +76017,8 @@ func (ec *executionContext) _UsageLog(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "promptAudioTokens":
 			out.Values[i] = ec._UsageLog_promptAudioTokens(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "promptCachedTokens":
 			out.Values[i] = ec._UsageLog_promptCachedTokens(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "promptWriteCachedTokens":
 			out.Values[i] = ec._UsageLog_promptWriteCachedTokens(ctx, field, obj)
 		case "promptWriteCachedTokens5m":
@@ -77534,17 +77931,24 @@ func (ec *executionContext) unmarshalNAutoDisableChannelStatusInput2githubᚗcom
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNBackupConflictStrategy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋgqlᚐBackupConflictStrategy(ctx context.Context, v any) (BackupConflictStrategy, error) {
-	var res BackupConflictStrategy
-	err := res.UnmarshalGQL(v)
+func (ec *executionContext) unmarshalNBackupConflictStrategy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋbizᚐConflictStrategy(ctx context.Context, v any) (biz.ConflictStrategy, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := biz.ConflictStrategy(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNBackupConflictStrategy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋgqlᚐBackupConflictStrategy(ctx context.Context, sel ast.SelectionSet, v BackupConflictStrategy) graphql.Marshaler {
-	return v
+func (ec *executionContext) marshalNBackupConflictStrategy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋbizᚐConflictStrategy(ctx context.Context, sel ast.SelectionSet, v biz.ConflictStrategy) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
-func (ec *executionContext) unmarshalNBackupOptionsInput2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋgqlᚐBackupOptionsInput(ctx context.Context, v any) (BackupOptionsInput, error) {
+func (ec *executionContext) unmarshalNBackupOptionsInput2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋbizᚐBackupOptions(ctx context.Context, v any) (biz.BackupOptions, error) {
 	res, err := ec.unmarshalInputBackupOptionsInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -80091,7 +80495,7 @@ func (ec *executionContext) unmarshalNRequestWhereInput2ᚖgithubᚗcomᚋlooplj
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNRestoreOptionsInput2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋgqlᚐRestoreOptionsInput(ctx context.Context, v any) (RestoreOptionsInput, error) {
+func (ec *executionContext) unmarshalNRestoreOptionsInput2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋbizᚐRestoreOptions(ctx context.Context, v any) (biz.RestoreOptions, error) {
 	res, err := ec.unmarshalInputRestoreOptionsInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -81830,6 +82234,19 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) unmarshalOCapabilityPolicy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐCapabilityPolicy(ctx context.Context, v any) (objects.CapabilityPolicy, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := objects.CapabilityPolicy(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOCapabilityPolicy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐCapabilityPolicy(ctx context.Context, sel ast.SelectionSet, v objects.CapabilityPolicy) graphql.Marshaler {
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(v))
+	return res
+}
+
 func (ec *executionContext) marshalOChannel2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋentᚐChannel(ctx context.Context, sel ast.SelectionSet, v *ent.Channel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -82379,6 +82796,21 @@ func (ec *executionContext) unmarshalOChannelPerformanceWhereInput2ᚖgithubᚗc
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputChannelPerformanceWhereInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOChannelPolicies2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐChannelPolicies(ctx context.Context, sel ast.SelectionSet, v *objects.ChannelPolicies) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ChannelPolicies(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOChannelPoliciesInput2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐChannelPolicies(ctx context.Context, v any) (*objects.ChannelPolicies, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputChannelPoliciesInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
