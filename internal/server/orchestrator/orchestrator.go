@@ -36,14 +36,13 @@ func NewChatCompletionOrchestrator(
 		NewErrorAwareStrategy(channelService),
 		NewWeightRoundRobinStrategy(channelService),
 		NewConnectionAwareStrategy(channelService, connectionTracker),
-		NewRandomStrategy(),
 	)
 
-	weightedLoadBalancer := NewLoadBalancer(systemService, channelService,
+	failoverLoadBalancer := NewLoadBalancer(systemService, channelService,
 		NewWeightStrategy(), NewRandomStrategy())
 
 	circuitBreakerLoadBalancer := NewLoadBalancer(systemService, channelService,
-		NewWeightStrategy(), NewModelAwareCircuitBreakerStrategy(modelCircuitBreaker), NewRandomStrategy())
+		NewWeightStrategy(), NewModelAwareCircuitBreakerStrategy(modelCircuitBreaker))
 
 	return &ChatCompletionOrchestrator{
 		Inbound:         inbound,
@@ -62,7 +61,7 @@ func NewChatCompletionOrchestrator(
 		selectedChannelIds:         []int{},
 		connectionTracker:          connectionTracker,
 		adaptiveLoadBalancer:       adaptiveLoadBalancer,
-		failoverLoadBalancer:       weightedLoadBalancer,
+		failoverLoadBalancer:       failoverLoadBalancer,
 		circuitBreakerLoadBalancer: circuitBreakerLoadBalancer,
 		modelCircuitBreaker:        modelCircuitBreaker,
 		proxy:                      nil,
@@ -164,7 +163,6 @@ func (processor *ChatCompletionOrchestrator) Process(ctx context.Context, reques
 		CandidateSelector:     processor.channelSelector,
 		LoadBalancer:          loadBalancer,
 		ModelMapper:           processor.ModelMapper,
-		ModelCircuitBreaker:   processor.modelCircuitBreaker,
 		Proxy:                 processor.proxy,
 		CurrentCandidateIndex: 0,
 	}
@@ -212,6 +210,11 @@ func (processor *ChatCompletionOrchestrator) Process(ctx context.Context, reques
 		// Connection tracking middleware for load balancing.
 		withConnectionTracking(outbound, processor.connectionTracker),
 	)
+
+	if retryPolicy.LoadBalancerStrategy == biz.LoadBalancerStrategyCircuitBreaker {
+		// Model circuit breaker middleware for circuit-breaker load balancing.
+		middlewares = append(middlewares, withModelCircuitBreaker(outbound, processor.modelCircuitBreaker))
+	}
 
 	pipelineOpts = append(pipelineOpts, pipeline.WithMiddlewares(middlewares...))
 
